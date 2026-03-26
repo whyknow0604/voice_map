@@ -11,6 +11,10 @@ line-length = 100
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]
 
+[tool.ruff.lint.per-file-ignores]
+# 프롬프트 파일은 긴 한국어 문장이 포함된 문자열 상수를 보유하므로 E501 제외
+"app/prompts/*.py" = ["E501"]
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
