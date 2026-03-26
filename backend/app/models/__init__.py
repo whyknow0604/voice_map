@@ -1,2 +1,2 @@
 # Models will be imported here for Alembic auto-detection
-# from app.models.user import User
+from app.models.user import User  # noqa: F401
