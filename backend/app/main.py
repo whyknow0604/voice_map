@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.v1.router import api_router
 from app.core.config import settings
 
 app = FastAPI(
@@ -27,6 +28,4 @@ async def health_check():
 
 
 # API 라우터 등록
-# from app.api.v1.endpoints import auth, chat
-# app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
-# app.include_router(chat.router, prefix="/api/v1/chat", tags=["chat"])
+app.include_router(api_router, prefix="/api/v1")
