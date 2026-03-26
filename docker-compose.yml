@@ -1,0 +1,17 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: voicemap-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: voicemap
+      POSTGRES_PASSWORD: voicemap
+      POSTGRES_DB: voicemap
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  pgdata:
