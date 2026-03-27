@@ -11,8 +11,9 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+asyncpg://voicemap:voicemap@localhost:5432/voicemap"
 
     # Auth
-    SECRET_KEY: str = "change-me-in-production"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
+    SECRET_KEY: str  # 반드시 .env에서 로드 — 기본값 없음
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30  # 30분 (보안 베스트 프랙티스)
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 30
     ALGORITHM: str = "HS256"
 
     # Google OAuth

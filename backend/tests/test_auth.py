@@ -163,9 +163,11 @@ class TestGoogleLogin:
         assert response.status_code == 422
 
 
-class TestGetCurrentUser:
-    async def test_valid_token_returns_user(self, client: AsyncClient, db_session: AsyncSession):
-        """유효한 access token → 사용자 정보 반환 (health endpoint 확인용)."""
+class TestGetMe:
+    async def test_valid_access_token_returns_user(
+        self, client: AsyncClient, db_session: AsyncSession
+    ):
+        """유효한 access token으로 /me 요청 → 사용자 정보 반환."""
         from app.core.security import create_access_token
 
         user = User(
@@ -179,30 +181,50 @@ class TestGetCurrentUser:
         await db_session.flush()
 
         token = create_access_token(user.id)
-        # /health는 인증 불필요이므로, 직접 security 함수를 테스트
-        from app.core.security import decode_token
+        response = await client.get(
+            "/api/v1/auth/me",
+            headers={"Authorization": f"Bearer {token}"},
+        )
 
-        payload = decode_token(token)
-        assert payload["sub"] == str(user.id)
-        assert payload["type"] == "access"
+        assert response.status_code == 200
+        data = response.json()
+        assert data["email"] == "auth@example.com"
+        assert data["name"] == "Auth User"
 
-    async def test_invalid_token_raises(self):
-        """유효하지 않은 JWT → HTTPException 401."""
-        from fastapi import HTTPException
+    async def test_no_token_returns_403(self, client: AsyncClient):
+        """토큰 없이 /me 요청 → 403."""
+        response = await client.get("/api/v1/auth/me")
+        assert response.status_code == 403
 
-        from app.core.security import decode_token
+    async def test_invalid_token_returns_401(self, client: AsyncClient):
+        """유효하지 않은 JWT로 /me 요청 → 401."""
+        response = await client.get(
+            "/api/v1/auth/me",
+            headers={"Authorization": "Bearer this.is.not.valid"},
+        )
+        assert response.status_code == 401
 
-        with pytest.raises(HTTPException) as exc_info:
-            decode_token("this.is.not.valid")
-        assert exc_info.value.status_code == 401
+    async def test_refresh_token_cannot_access_me(
+        self, client: AsyncClient, db_session: AsyncSession
+    ):
+        """refresh token으로 /me 접근 시 401 — access token 전용 엔드포인트."""
+        from app.core.security import create_refresh_token
 
-    async def test_refresh_token_cannot_be_used_as_access(self):
-        """refresh 토큰을 access로 사용 시 401 (type 필드 검증)."""
-        import uuid
+        user = User(
+            id=uuid.uuid4(),
+            email="refresh@example.com",
+            name="Refresh User",
+            provider="google",
+            provider_id="gid-refresh",
+        )
+        db_session.add(user)
+        await db_session.flush()
 
-        from app.core.security import create_refresh_token, decode_token
+        refresh_token = create_refresh_token(user.id)
+        response = await client.get(
+            "/api/v1/auth/me",
+            headers={"Authorization": f"Bearer {refresh_token}"},
+        )
 
-        refresh = create_refresh_token(uuid.uuid4())
-        payload = decode_token(refresh)
-        # type이 "refresh"이므로 get_current_user에서 거부된다
-        assert payload["type"] == "refresh"
+        assert response.status_code == 401
+        assert response.json()["detail"]["code"] == "INVALID_TOKEN_TYPE"

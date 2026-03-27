@@ -12,8 +12,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.db.session import get_db
 
-REFRESH_TOKEN_EXPIRE_DAYS = 30
-
 bearer_scheme = HTTPBearer()
 
 
@@ -26,7 +24,7 @@ def create_access_token(user_id: uuid.UUID) -> str:
 
 def create_refresh_token(user_id: uuid.UUID) -> str:
     """refresh JWT 토큰 생성."""
-    expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    expire = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     payload = {"sub": str(user_id), "exp": expire, "type": "refresh"}
     return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
