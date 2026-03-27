@@ -1,0 +1,5 @@
+# 실험용 추가 의존성 — 프로덕션 requirements.txt와 별도 관리
+# 실행: pip install -r backend/experiments/requirements-experiments.txt
+
+# 오디오 I/O (마이크 입력 + 스피커 출력)
+pyaudio>=0.2.14
