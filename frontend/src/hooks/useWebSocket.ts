@@ -29,6 +29,13 @@ export function useWebSocket(url: string, options: UseWebSocketOptions) {
     if (!isMountedRef.current) return;
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
+    // 기존 연결이 CONNECTING 상태로 남아있으면 정리
+    if (wsRef.current) {
+      wsRef.current.onclose = null;
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+
     setStatus("connecting");
     const ws = new WebSocket(url);
     wsRef.current = ws;
@@ -57,11 +64,14 @@ export function useWebSocket(url: string, options: UseWebSocketOptions) {
 
     ws.onerror = () => {
       if (!isMountedRef.current) return;
+      if (wsRef.current !== ws) return;
       setStatus("error");
     };
 
     ws.onclose = () => {
       if (!isMountedRef.current) return;
+      // 이미 다른 WebSocket이 wsRef를 대체했다면 무시 (StrictMode 대응)
+      if (wsRef.current !== ws) return;
       setStatus("closed");
       wsRef.current = null;
       // Exponential backoff: 1s, 2s, 4s, ..., max 30s

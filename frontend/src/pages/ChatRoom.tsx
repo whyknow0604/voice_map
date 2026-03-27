@@ -11,6 +11,10 @@ function nextId(): string {
   return String(messageIdCounter);
 }
 
+function generateSessionId(): string {
+  return crypto.randomUUID();
+}
+
 export default function ChatRoom() {
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -21,27 +25,31 @@ export default function ChatRoom() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const streamingIdRef = useRef<string | null>(null);
+  const sessionIdRef = useRef<string>(generateSessionId());
 
   const wsToken = localStorage.getItem("access_token") ?? "";
-  const wsUrl = `/ws/chat?token=${encodeURIComponent(wsToken)}`;
+  const wsUrl = `/ws/chat?token=${encodeURIComponent(wsToken)}&session_id=${encodeURIComponent(sessionIdRef.current)}`;
 
   const handleToken = useCallback((receivedToken: string) => {
     setIsTyping(false);
-    setMessages((prev) => {
-      if (streamingIdRef.current === null) {
-        const id = nextId();
-        streamingIdRef.current = id;
-        return [
-          ...prev,
-          { id, role: "ai", content: receivedToken, timestamp: new Date(), isStreaming: true },
-        ];
-      }
-      return prev.map((m) =>
-        m.id === streamingIdRef.current
-          ? { ...m, content: m.content + receivedToken }
-          : m
+    // streamingIdRef 변경은 state updater 밖에서 (React StrictMode가 updater를 2번 호출하므로)
+    if (streamingIdRef.current === null) {
+      const id = nextId();
+      streamingIdRef.current = id;
+      setMessages((prev) => [
+        ...prev,
+        { id, role: "ai" as const, content: receivedToken, timestamp: new Date(), isStreaming: true },
+      ]);
+    } else {
+      const currentId = streamingIdRef.current;
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === currentId
+            ? { ...m, content: m.content + receivedToken }
+            : m
+        )
       );
-    });
+    }
   }, []);
 
   const handleDone = useCallback(() => {
