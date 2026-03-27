@@ -5,15 +5,15 @@ import MessageBubble, { Message } from "@/components/MessageBubble";
 import "@/styles/ConversationList.css";
 
 interface ApiMessage {
-  id: number;
-  role: "user" | "assistant";
+  id: string;
+  role: "user" | "ai";
   content: string;
   audio_url: string | null;
   created_at: string;
 }
 
 interface ConversationDetailData {
-  id: number;
+  id: string;
   mode: "text" | "voice";
   title: string | null;
   created_at: string;
@@ -21,11 +21,10 @@ interface ConversationDetailData {
   messages: ApiMessage[];
 }
 
-/** BE "assistant" role → MessageBubble "ai" role로 변환 */
 function toMessage(apiMsg: ApiMessage): Message {
   return {
-    id: String(apiMsg.id),
-    role: apiMsg.role === "assistant" ? "ai" : "user",
+    id: apiMsg.id,
+    role: apiMsg.role,
     content: apiMsg.content,
     timestamp: new Date(apiMsg.created_at),
   };

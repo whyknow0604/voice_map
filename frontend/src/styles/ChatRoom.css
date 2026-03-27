@@ -57,6 +57,22 @@
 
 .chatroom-history-btn:hover { background: #F3F4F6; }
 
+.chatroom-voice-btn {
+  background: none;
+  border: 1px solid var(--color-border);
+  color: #555;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  min-width: 44px;
+}
+
+.chatroom-voice-btn:hover { background: #F3F4F6; }
+
 /* Message list */
 .message-list {
   flex: 1;

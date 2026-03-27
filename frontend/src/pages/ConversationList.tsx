@@ -4,7 +4,7 @@ import api from "@/services/api";
 import "@/styles/ConversationList.css";
 
 interface Conversation {
-  id: number;
+  id: string;
   mode: "text" | "voice";
   title: string | null;
   created_at: string;
@@ -49,7 +49,7 @@ export default function ConversationList() {
     navigate("/chat");
   };
 
-  const handleConversationClick = (id: number) => {
+  const handleConversationClick = (id: string) => {
     navigate(`/conversations/${id}`);
   };
 

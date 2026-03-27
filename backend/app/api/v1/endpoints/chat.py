@@ -8,14 +8,14 @@ from sqlalchemy import select
 
 from app.core.security import decode_token
 from app.db.session import async_session
+from app.models.conversation import Conversation, ConversationMode, Message, MessageRole
 from app.models.user import User
 from app.services.ai_service import get_system_prompt
 from app.services.gemini_client import GeminiClient
 
 router = APIRouter()
 
-# 세션 단위 대화 히스토리 저장소 (메모리 기반, Sprint 2에서 DB로 이전)
-# key: session_id (str), value: list of {"role": "user"|"model", "text": "..."}
+# 세션 단위 대화 히스토리 (Gemini API 컨텍스트 전달용, DB와 병행 사용)
 _session_histories: dict[str, list[dict[str, str]]] = {}
 
 # GeminiClient 지연 초기화 — 테스트 환경에서 API 키 없이 모듈 로드 가능
@@ -90,6 +90,15 @@ async def websocket_chat(
     history = _session_histories[session_id]
     system_prompt = get_system_prompt()
 
+    # DB에 대화 세션 생성
+    conversation_id: uuid.UUID | None = None
+    async with async_session() as db:
+        conversation = Conversation(user_id=user.id, mode=ConversationMode.text)
+        db.add(conversation)
+        await db.commit()
+        await db.refresh(conversation)
+        conversation_id = conversation.id
+
     try:
         while True:
             raw = await websocket.receive_text()
@@ -105,16 +114,35 @@ async def websocket_chat(
             # 히스토리에 사용자 메시지 추가
             history.append({"role": "user", "text": user_text})
 
+            # 사용자 메시지 DB 저장
+            async with async_session() as db:
+                db.add(Message(
+                    conversation_id=conversation_id,
+                    role=MessageRole.user,
+                    content=user_text,
+                ))
+                await db.commit()
+
             # Gemini 스트리밍 응답 전송
             full_response = ""
             try:
-                async for chunk in _get_gemini_client().generate_stream(history, system_prompt):
+                async for chunk in _get_gemini_client().generate_stream(
+                    history, system_prompt
+                ):
                     full_response += chunk
                     await websocket.send_text(_make_message("token", chunk))
 
                 # 히스토리에 모델 응답 추가
                 if full_response:
                     history.append({"role": "model", "text": full_response})
+                    # AI 응답 DB 저장
+                    async with async_session() as db:
+                        db.add(Message(
+                            conversation_id=conversation_id,
+                            role=MessageRole.ai,
+                            content=full_response,
+                        ))
+                        await db.commit()
             except Exception as e:
                 # 스트리밍 도중 에러 발생 — 클라이언트에 알리고 done으로 마무리
                 try:
@@ -133,3 +161,18 @@ async def websocket_chat(
             await websocket.send_text(_make_message("done", ""))
         except Exception:
             pass
+    finally:
+        # 대화 종료 시각 기록
+        if conversation_id:
+            try:
+                async with async_session() as db:
+                    result = await db.execute(
+                        select(Conversation).where(Conversation.id == conversation_id)
+                    )
+                    conv = result.scalar_one_or_none()
+                    if conv:
+                        from datetime import datetime, timezone
+                        conv.ended_at = datetime.now(timezone.utc)
+                        await db.commit()
+            except Exception:
+                pass

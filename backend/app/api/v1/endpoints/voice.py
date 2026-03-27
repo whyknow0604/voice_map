@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import json
 import uuid
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect, status
 from google import genai
@@ -13,6 +15,7 @@ from sqlalchemy import select
 
 from app.core.security import decode_token
 from app.db.session import async_session
+from app.models.conversation import Conversation, ConversationMode, Message, MessageRole
 from app.models.user import User
 from app.services.gemini_live_client import GeminiLiveClient
 
@@ -121,12 +124,15 @@ async def _send_loop(
 async def _recv_loop(
     websocket: WebSocket,
     session: genai.live.AsyncSession,
+    transcript_parts: list[str],
 ) -> None:
     """Gemini Live API로부터 응답을 수신하여 FE로 전달한다.
 
     - 오디오 응답 → {"type": "audio", "data": "<base64 PCM 24kHz>"}
     - 트랜스크립트 → {"type": "transcript", "content": "텍스트"}
     - 응답 완료 → {"type": "turn_complete"}
+
+    transcript_parts에 텍스트를 수집하여 DB 저장에 활용한다.
     """
     async for message in session.receive():
         server_content = message.server_content
@@ -137,12 +143,16 @@ async def _recv_loop(
             for part in server_content.model_turn.parts:
                 # 오디오 응답 — inline_data.data 는 base64 인코딩된 PCM 24kHz
                 if part.inline_data and part.inline_data.data:
+                    audio_b64 = base64.b64encode(
+                        part.inline_data.data
+                    ).decode("ascii")
                     await websocket.send_text(
-                        _make_message("audio", data=part.inline_data.data)
+                        _make_message("audio", data=audio_b64)
                     )
 
                 # 텍스트 트랜스크립트 (있는 경우)
                 if part.text:
+                    transcript_parts.append(part.text)
                     await websocket.send_text(
                         _make_message("transcript", content=part.text)
                     )
@@ -187,12 +197,27 @@ async def websocket_voice(
     # maxsize=100: 약 6.4초 버퍼 (100 * 1024 samples / 16000 Hz)
     audio_queue: asyncio.Queue[bytes | None] = asyncio.Queue(maxsize=100)
 
+    # DB에 음성 대화 세션 생성
+    conversation_id: uuid.UUID | None = None
+    async with async_session() as db:
+        conversation = Conversation(user_id=user.id, mode=ConversationMode.voice)
+        db.add(conversation)
+        await db.commit()
+        await db.refresh(conversation)
+        conversation_id = conversation.id
+
+    transcript_parts: list[str] = []
+
     try:
         async with client.connect() as session:
             # 수신, 전송, Gemini 응답 수신 태스크를 동시에 실행
-            receive_task = asyncio.create_task(_receive_loop(websocket, session, audio_queue))
+            receive_task = asyncio.create_task(
+                _receive_loop(websocket, session, audio_queue)
+            )
             send_task = asyncio.create_task(_send_loop(session, audio_queue))
-            recv_task = asyncio.create_task(_recv_loop(websocket, session))
+            recv_task = asyncio.create_task(
+                _recv_loop(websocket, session, transcript_parts)
+            )
 
             # send_task 완료 후(end_of_turn 전송 완료) recv_task 대기
             # receive_task는 WebSocketDisconnect 시 종료
@@ -205,6 +230,17 @@ async def websocket_voice(
                 except asyncio.CancelledError:
                     pass
 
+            # 트랜스크립트가 있으면 AI 응답으로 DB 저장
+            if transcript_parts and conversation_id:
+                full_transcript = "".join(transcript_parts)
+                async with async_session() as db:
+                    db.add(Message(
+                        conversation_id=conversation_id,
+                        role=MessageRole.ai,
+                        content=full_transcript,
+                    ))
+                    await db.commit()
+
     except WebSocketDisconnect:
         pass
     except Exception as e:
@@ -212,3 +248,19 @@ async def websocket_voice(
             await websocket.send_text(_make_message("error", content=str(e)))
         except Exception:
             pass
+    finally:
+        # 대화 종료 시각 기록
+        if conversation_id:
+            try:
+                async with async_session() as db:
+                    result = await db.execute(
+                        select(Conversation).where(
+                            Conversation.id == conversation_id
+                        )
+                    )
+                    conv = result.scalar_one_or_none()
+                    if conv:
+                        conv.ended_at = datetime.now(timezone.utc)
+                        await db.commit()
+            except Exception:
+                pass

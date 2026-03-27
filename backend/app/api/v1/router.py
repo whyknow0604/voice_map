@@ -2,10 +2,10 @@
 
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import auth, chat, conversations
+from app.api.v1.endpoints import auth, conversations
 
 api_router = APIRouter()
 
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
-api_router.include_router(chat.router, prefix="/ws", tags=["chat"])
 api_router.include_router(conversations.router, prefix="/conversations", tags=["conversations"])
+# chat/voice WebSocket 라우터는 main.py에서 /ws prefix로 별도 등록
