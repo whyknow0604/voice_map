@@ -21,17 +21,23 @@ export interface VoiceErrorMessage {
   content: string;
 }
 
+export interface VoiceInterruptedMessage {
+  type: "interrupted";
+}
+
 export type VoiceWsMessage =
   | VoiceTranscriptMessage
   | VoiceAudioMessage
   | VoiceTurnCompleteMessage
-  | VoiceErrorMessage;
+  | VoiceErrorMessage
+  | VoiceInterruptedMessage;
 
 interface UseVoiceWebSocketOptions {
   onAudio: (base64Pcm: string) => void;
   onTranscript: (content: string) => void;
   onTurnComplete: () => void;
   onError: (msg: string) => void;
+  onInterrupted?: () => void;
 }
 
 const BACKOFF_BASE_MS = 1000;
@@ -95,6 +101,9 @@ export function useVoiceWebSocket(url: string, options: UseVoiceWebSocketOptions
           break;
         case "error":
           optionsRef.current.onError(parsed.content);
+          break;
+        case "interrupted":
+          optionsRef.current.onInterrupted?.();
           break;
       }
     };
@@ -167,5 +176,5 @@ export function useVoiceWebSocket(url: string, options: UseVoiceWebSocketOptions
     };
   }, [connect, disconnect]);
 
-  return { status, sendAudioChunk, sendEndOfTurn, sendModeSwitch };
+  return { status, sendAudioChunk, sendEndOfTurn, sendModeSwitch, disconnect };
 }

@@ -90,14 +90,8 @@ async def websocket_chat(
     history = _session_histories[session_id]
     system_prompt = get_system_prompt()
 
-    # DB에 대화 세션 생성
+    # 첫 메시지 수신 시에만 Conversation 생성 (빈 대화 방지)
     conversation_id: uuid.UUID | None = None
-    async with async_session() as db:
-        conversation = Conversation(user_id=user.id, mode=ConversationMode.text)
-        db.add(conversation)
-        await db.commit()
-        await db.refresh(conversation)
-        conversation_id = conversation.id
 
     try:
         while True:
@@ -110,6 +104,17 @@ async def websocket_chat(
                 user_text = raw.strip()
             if not user_text:
                 continue
+
+            # 첫 메시지 시 대화 세션 생성 (lazy)
+            if conversation_id is None:
+                async with async_session() as db:
+                    conversation = Conversation(
+                        user_id=user.id, mode=ConversationMode.text
+                    )
+                    db.add(conversation)
+                    await db.commit()
+                    await db.refresh(conversation)
+                    conversation_id = conversation.id
 
             # 히스토리에 사용자 메시지 추가
             history.append({"role": "user", "text": user_text})

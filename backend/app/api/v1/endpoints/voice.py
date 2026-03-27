@@ -112,7 +112,7 @@ async def _send_loop(
         while True:
             chunk = await audio_queue.get()
             if chunk is None:
-                logger.info("[send_loop] sentinel 수신, 종료 (전송 청크: %d)", chunk_count)
+                logger.warning("[send_loop] sentinel 수신, 종료 (전송 청크: %d)", chunk_count)
                 break
             try:
                 await session.send_realtime_input(
@@ -126,7 +126,7 @@ async def _send_loop(
                 # 세션 에러는 치명적이므로 종료
                 break
     except asyncio.CancelledError:
-        logger.info("[send_loop] 취소됨 (전송 청크: %d)", chunk_count)
+        logger.warning("[send_loop] 취소됨 (전송 청크: %d)", chunk_count)
         raise
     except Exception as e:
         logger.error("[send_loop] 루프 에러: %s", e)
@@ -145,39 +145,49 @@ async def _recv_loop(
 
     transcript_parts에 텍스트를 수집하여 DB 저장에 활용한다.
     """
+    # SDK의 session.receive()는 turn_complete 후 break하므로
+    # 멀티턴을 위해 while True로 반복 호출
     try:
-        async for message in session.receive():
-            server_content = message.server_content
-            if server_content is None:
-                continue
+        while True:
+            async for message in session.receive():
+                server_content = message.server_content
+                if server_content is None:
+                    continue
 
-            # 사용자 발화 감지 시 Gemini가 현재 응답을 중단 — FE에 알려 재생 중단
-            if server_content.interrupted:
-                logger.info("[recv_loop] interrupted — FE에 중단 신호 전달")
-                await websocket.send_text(_make_message("interrupted"))
+                if server_content.interrupted:
+                    logger.warning(
+                        "[recv_loop] interrupted — FE에 중단 신호 전달"
+                    )
+                    await websocket.send_text(_make_message("interrupted"))
 
-            if server_content.model_turn:
-                for part in server_content.model_turn.parts:
-                    if part.inline_data and part.inline_data.data:
-                        audio_b64 = base64.b64encode(
-                            part.inline_data.data
-                        ).decode("ascii")
-                        await websocket.send_text(
-                            _make_message("audio", data=audio_b64)
-                        )
+                if server_content.model_turn:
+                    for part in server_content.model_turn.parts:
+                        if part.inline_data and part.inline_data.data:
+                            audio_b64 = base64.b64encode(
+                                part.inline_data.data
+                            ).decode("ascii")
+                            await websocket.send_text(
+                                _make_message("audio", data=audio_b64)
+                            )
 
-                    if part.text:
-                        transcript_parts.append(part.text)
-                        await websocket.send_text(
-                            _make_message("transcript", content=part.text)
-                        )
+                        if part.text:
+                            transcript_parts.append(part.text)
+                            await websocket.send_text(
+                                _make_message(
+                                    "transcript", content=part.text
+                                )
+                            )
 
-            if server_content.turn_complete:
-                logger.info("[recv_loop] turn_complete — 다음 턴 대기")
-                await websocket.send_text(_make_message("turn_complete"))
-                # 멀티턴: 종료하지 않고 다음 턴 대기
+                if server_content.turn_complete:
+                    logger.warning(
+                        "[recv_loop] turn_complete — 다음 턴 대기"
+                    )
+                    await websocket.send_text(
+                        _make_message("turn_complete")
+                    )
+            logger.warning("[recv_loop] receive() 종료, 다음 턴 시작")
     except asyncio.CancelledError:
-        logger.info("[recv_loop] 취소됨")
+        logger.warning("[recv_loop] 취소됨")
         raise
     except Exception as e:
         logger.error("[recv_loop] 에러: %s", e)
@@ -223,9 +233,9 @@ async def websocket_voice(
     transcript_parts: list[str] = []
 
     try:
-        logger.info("[voice] Gemini 세션 연결 시작")
+        logger.warning("[voice] Gemini 세션 연결 시작")
         async with client.connect() as session:
-            logger.info("[voice] Gemini 세션 연결 성공, 태스크 시작")
+            logger.warning("[voice] Gemini 세션 연결 성공, 태스크 시작")
             receive_task = asyncio.create_task(
                 _receive_loop(websocket, session, audio_queue)
             )
@@ -238,7 +248,7 @@ async def websocket_voice(
             try:
                 await receive_task
             finally:
-                logger.info("[voice] receive_task 종료, 나머지 태스크 정리")
+                logger.warning("[voice] receive_task 종료, 나머지 태스크 정리")
                 send_task.cancel()
                 recv_task.cancel()
                 for task in [send_task, recv_task]:
@@ -265,7 +275,7 @@ async def websocket_voice(
                     await db.commit()
 
     except WebSocketDisconnect:
-        logger.info("[voice] WebSocket 연결 종료 (클라이언트)")
+        logger.warning("[voice] WebSocket 연결 종료 (클라이언트)")
     except Exception as e:
         logger.error("[voice] 핸들러 에러: %s", e)
         try:

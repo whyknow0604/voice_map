@@ -111,49 +111,34 @@
   min-height: 24px;
 }
 
-/* Large circular record button */
-.voice-record-btn {
+/* Voice indicator (always-on, no button) */
+.voice-indicator {
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  border: none;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.15s, opacity 0.15s, box-shadow 0.15s;
-  position: relative;
-  background: var(--color-primary);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  /* 터치 타겟 최소 44px 이상 확보 */
-  min-width: 44px;
-  min-height: 44px;
+  background: #E5E7EB;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transition: background 0.3s, box-shadow 0.3s;
 }
 
-.voice-record-btn:hover:not(:disabled) {
-  transform: scale(1.05);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
+/* 듣고 있는 상태 */
+.voice-indicator--listening {
+  background: #10B981;
+  animation: pulse-listening 2s ease-in-out infinite;
 }
 
-.voice-record-btn:active:not(:disabled) {
-  transform: scale(0.97);
-}
-
-.voice-record-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* 녹음 중 상태 */
-.voice-record-btn--recording {
-  background: #EF4444;
-  animation: pulse-recording 1.5s ease-in-out infinite;
-}
-
-/* AI 응답 중 상태 */
-.voice-record-btn--ai-responding {
+/* AI 말하는 상태 */
+.voice-indicator--ai-speaking {
   background: #6366F1;
   animation: pulse-ai 2s ease-in-out infinite;
+}
+
+@keyframes pulse-listening {
+  0%, 100% { box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4); }
+  50% { box-shadow: 0 4px 32px rgba(16, 185, 129, 0.7), 0 0 0 16px rgba(16, 185, 129, 0.1); }
 }
 
 @keyframes pulse-recording {
@@ -236,6 +221,25 @@
   line-height: 1.6;
   color: var(--color-text);
   white-space: pre-wrap;
+}
+
+/* End session button */
+.voice-end-session-btn {
+  margin-top: 16px;
+  padding: 12px 32px;
+  background: #EF4444;
+  color: #fff;
+  border: none;
+  border-radius: 24px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  min-height: 44px;
+  transition: opacity 0.15s;
+}
+
+.voice-end-session-btn:hover {
+  opacity: 0.85;
 }
 
 /* Error message inside main area */
