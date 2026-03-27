@@ -129,6 +129,9 @@ export default function ChatRoom() {
   return (
     <div className="chatroom">
       <header className="chatroom-header">
+        <button className="chatroom-history-btn" onClick={() => navigate("/conversations")}>
+          목록
+        </button>
         <h1 className="chatroom-title">Voice Map</h1>
         <span className={`chatroom-status chatroom-status--${status}`}>
           {status === "open"

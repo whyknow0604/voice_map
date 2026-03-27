@@ -4,6 +4,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import LoginPage from "@/pages/LoginPage";
 import ChatRoom from "@/pages/ChatRoom";
+import ConversationList from "@/pages/ConversationList";
+import ConversationDetail from "@/pages/ConversationDetail";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -20,6 +22,22 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ChatRoom />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/conversations"
+              element={
+                <ProtectedRoute>
+                  <ConversationList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/conversations/:id"
+              element={
+                <ProtectedRoute>
+                  <ConversationDetail />
                 </ProtectedRoute>
               }
             />
