@@ -3,8 +3,8 @@ from logging.config import fileConfig
 
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
-from alembic import context
 
+from alembic import context
 from app.core.config import settings
 from app.db.base import Base
 
@@ -16,7 +16,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Import all models so Alembic can detect them
-import app.models  # noqa: F401
+import app.models  # noqa: E402, F401
 
 target_metadata = Base.metadata
 
