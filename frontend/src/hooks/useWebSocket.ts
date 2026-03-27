@@ -13,14 +13,20 @@ interface UseWebSocketOptions {
   onError: (msg: string) => void;
 }
 
+const BACKOFF_BASE_MS = 1000;
+const BACKOFF_MAX_MS = 30000;
+
 export function useWebSocket(url: string, options: UseWebSocketOptions) {
   const wsRef = useRef<WebSocket | null>(null);
   const [status, setStatus] = useState<WsStatus>("closed");
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const optionsRef = useRef(options);
+  const reconnectAttemptRef = useRef(0);
+  const isMountedRef = useRef(true);
   optionsRef.current = options;
 
   const connect = useCallback(() => {
+    if (!isMountedRef.current) return;
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
     setStatus("connecting");
@@ -28,6 +34,8 @@ export function useWebSocket(url: string, options: UseWebSocketOptions) {
     wsRef.current = ws;
 
     ws.onopen = () => {
+      if (!isMountedRef.current) return;
+      reconnectAttemptRef.current = 0;
       setStatus("open");
     };
 
@@ -48,16 +56,23 @@ export function useWebSocket(url: string, options: UseWebSocketOptions) {
     };
 
     ws.onerror = () => {
+      if (!isMountedRef.current) return;
       setStatus("error");
     };
 
     ws.onclose = () => {
+      if (!isMountedRef.current) return;
       setStatus("closed");
       wsRef.current = null;
-      // 3초 후 재연결
+      // Exponential backoff: 1s, 2s, 4s, ..., max 30s
+      const delay = Math.min(
+        BACKOFF_BASE_MS * Math.pow(2, reconnectAttemptRef.current),
+        BACKOFF_MAX_MS
+      );
+      reconnectAttemptRef.current += 1;
       reconnectTimer.current = setTimeout(() => {
         connect();
-      }, 3000);
+      }, delay);
     };
   }, [url]);
 
@@ -68,6 +83,7 @@ export function useWebSocket(url: string, options: UseWebSocketOptions) {
   }, []);
 
   const disconnect = useCallback(() => {
+    isMountedRef.current = false;
     if (reconnectTimer.current) {
       clearTimeout(reconnectTimer.current);
       reconnectTimer.current = null;
@@ -77,6 +93,7 @@ export function useWebSocket(url: string, options: UseWebSocketOptions) {
   }, []);
 
   useEffect(() => {
+    isMountedRef.current = true;
     connect();
     return () => {
       disconnect();
