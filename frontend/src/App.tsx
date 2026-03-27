@@ -4,6 +4,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import LoginPage from "@/pages/LoginPage";
 import ChatRoom from "@/pages/ChatRoom";
+import VoicePage from "@/pages/VoicePage";
 import ConversationList from "@/pages/ConversationList";
 import ConversationDetail from "@/pages/ConversationDetail";
 
@@ -30,6 +31,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ConversationList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/voice"
+              element={
+                <ProtectedRoute>
+                  <VoicePage />
                 </ProtectedRoute>
               }
             />
