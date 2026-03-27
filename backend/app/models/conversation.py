@@ -44,6 +44,7 @@ class Conversation(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
+        default=func.now(),
         nullable=False,
     )
     # ended_at이 None이면 대화가 진행 중임을 의미
