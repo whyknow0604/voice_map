@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 from collections.abc import AsyncGenerator
 from dataclasses import dataclass
 from typing import Union
@@ -113,9 +114,12 @@ class GeminiLiveClient:
 
                 if server_content.model_turn:
                     for part in server_content.model_turn.parts:
-                        # 오디오 응답 — inline_data.data 는 base64 인코딩된 PCM
+                        # 오디오 응답 — inline_data.data는 bytes, base64로 변환
                         if part.inline_data and part.inline_data.data:
-                            yield AudioChunk(data=part.inline_data.data)
+                            audio_b64 = base64.b64encode(
+                                part.inline_data.data
+                            ).decode("ascii")
+                            yield AudioChunk(data=audio_b64)
 
                         # 텍스트 트랜스크립트 (있는 경우)
                         if part.text:
