@@ -53,9 +53,9 @@ async def _authenticate_ws(token: str) -> User | None:
         return result.scalar_one_or_none()
 
 
-def _make_message(msg_type: str, data: str) -> str:
+def _make_message(msg_type: str, content: str) -> str:
     """JSON 메시지 직렬화."""
-    return json.dumps({"type": msg_type, "data": data}, ensure_ascii=False)
+    return json.dumps({"type": msg_type, "content": content}, ensure_ascii=False)
 
 
 @router.websocket("/chat")
@@ -69,12 +69,12 @@ async def websocket_chat(
     연결 시 JWT 인증 → 클라이언트 메시지 수신 → Gemini 스트리밍 응답 전송.
 
     메시지 포맷 (서버 → 클라이언트):
-    - {"type": "chunk", "data": "텍스트 청크"}
-    - {"type": "done", "data": ""}
-    - {"type": "error", "data": "에러 메시지"}
+    - {"type": "token", "content": "텍스트 청크"}
+    - {"type": "done", "content": ""}
+    - {"type": "error", "content": "에러 메시지"}
 
     메시지 포맷 (클라이언트 → 서버):
-    - 단순 문자열 텍스트
+    - {"type": "message", "content": "텍스트"} 또는 단순 문자열
     """
     user = await _authenticate_ws(token)
     if user is None:
@@ -92,8 +92,13 @@ async def websocket_chat(
 
     try:
         while True:
-            user_text = await websocket.receive_text()
-            user_text = user_text.strip()
+            raw = await websocket.receive_text()
+            # FE는 JSON {type: "message", content: "..."} 형태로 전송, 단순 문자열도 지원
+            try:
+                parsed = json.loads(raw)
+                user_text = parsed.get("content", "").strip()
+            except (json.JSONDecodeError, AttributeError):
+                user_text = raw.strip()
             if not user_text:
                 continue
 
@@ -104,7 +109,7 @@ async def websocket_chat(
             full_response = ""
             async for chunk in _get_gemini_client().generate_stream(history, system_prompt):
                 full_response += chunk
-                await websocket.send_text(_make_message("chunk", chunk))
+                await websocket.send_text(_make_message("token", chunk))
 
             # 히스토리에 모델 응답 추가
             if full_response:

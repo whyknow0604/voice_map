@@ -76,8 +76,8 @@ class TestWebSocketChat:
                     done = False
                     while not done:
                         msg = json.loads(ws.receive_text())
-                        if msg["type"] == "chunk":
-                            received_chunks.append(msg["data"])
+                        if msg["type"] == "token":
+                            received_chunks.append(msg["content"])
                         elif msg["type"] == "done":
                             done = True
 
