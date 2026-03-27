@@ -188,7 +188,7 @@ class TestListConversations:
         from datetime import datetime, timedelta, timezone
 
         now = datetime.now(timezone.utc)
-        # created_at을 명시적으로 설정 — SQLite 인메모리 DB에서 server_default가 동일 타임스탬프를 반환하는 문제 회피
+        # created_at 명시적 설정 — server_default가 동일 타임스탬프를 반환하는 문제 회피
         c1 = Conversation(
             user_id=user.id, mode=ConversationMode.text, title="첫 번째", created_at=now
         )
