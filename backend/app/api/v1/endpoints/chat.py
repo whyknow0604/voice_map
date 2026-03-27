@@ -107,14 +107,22 @@ async def websocket_chat(
 
             # Gemini 스트리밍 응답 전송
             full_response = ""
-            async for chunk in _get_gemini_client().generate_stream(history, system_prompt):
-                full_response += chunk
-                await websocket.send_text(_make_message("token", chunk))
+            try:
+                async for chunk in _get_gemini_client().generate_stream(history, system_prompt):
+                    full_response += chunk
+                    await websocket.send_text(_make_message("token", chunk))
 
-            # 히스토리에 모델 응답 추가
-            if full_response:
-                history.append({"role": "model", "text": full_response})
+                # 히스토리에 모델 응답 추가
+                if full_response:
+                    history.append({"role": "model", "text": full_response})
+            except Exception as e:
+                # 스트리밍 도중 에러 발생 — 클라이언트에 알리고 done으로 마무리
+                try:
+                    await websocket.send_text(_make_message("error", str(e)))
+                except Exception:
+                    pass
 
+            # 성공/실패 무관하게 항상 done 전송 — 클라이언트가 무한 로딩에 빠지지 않도록
             await websocket.send_text(_make_message("done", ""))
 
     except WebSocketDisconnect:
@@ -122,5 +130,6 @@ async def websocket_chat(
     except Exception as e:
         try:
             await websocket.send_text(_make_message("error", str(e)))
+            await websocket.send_text(_make_message("done", ""))
         except Exception:
             pass

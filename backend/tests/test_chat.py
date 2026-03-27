@@ -129,6 +129,43 @@ class TestWebSocketChat:
         assert call_count == 2
         chat_module._session_histories.pop(session_id, None)
 
+    async def test_gemini_error_sends_error_then_done(self):
+        """Gemini 스트리밍 도중 예외 발생 시 error 후 done을 전송한다 (무한 로딩 방지)."""
+        from app.api.v1.endpoints import chat as chat_module
+
+        user = _make_fake_user()
+        token = create_access_token(user.id)
+
+        async def mock_authenticate(t: str):
+            return user
+
+        async def failing_stream(messages, system_prompt):
+            yield "일부 응답"
+            raise RuntimeError("Gemini API 오류")
+
+        with (
+            patch.object(chat_module, "_authenticate_ws", side_effect=mock_authenticate),
+            patch.object(
+                chat_module,
+                "_get_gemini_client",
+                return_value=_make_mock_client(failing_stream),
+            ),
+        ):
+            with TestClient(app) as client:
+                with client.websocket_connect(f"/api/v1/ws/chat?token={token}") as ws:
+                    ws.send_text("테스트 메시지")
+
+                    received_types = []
+                    # error + done 두 메시지를 수신
+                    for _ in range(10):
+                        msg = json.loads(ws.receive_text())
+                        received_types.append(msg["type"])
+                        if msg["type"] == "done":
+                            break
+
+        assert "error" in received_types
+        assert received_types[-1] == "done"
+
 
 @pytest.mark.asyncio(loop_scope="function")
 class TestJWTAuthForWebSocket:
