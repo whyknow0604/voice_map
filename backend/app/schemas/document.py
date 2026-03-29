@@ -42,3 +42,11 @@ class DocumentListResponse(BaseModel):
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class SimilarDocumentResponse(BaseModel):
+    """유사 문서 응답 스키마 — cosine similarity 점수 포함."""
+
+    id: uuid.UUID
+    title: str
+    similarity_score: float

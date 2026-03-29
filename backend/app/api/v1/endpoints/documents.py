@@ -9,7 +9,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import get_current_user
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.document import DocumentCreate, DocumentListResponse, DocumentResponse
+from app.schemas.document import (
+    DocumentCreate,
+    DocumentListResponse,
+    DocumentResponse,
+    SimilarDocumentResponse,
+)
 from app.services import document_crud_service
 
 router = APIRouter()
@@ -69,6 +74,27 @@ async def get_document(
         user_id=current_user.id,
     )
     return DocumentResponse.model_validate(document)
+
+
+@router.get("/{document_id}/similar", response_model=list[SimilarDocumentResponse])
+async def get_similar_documents(
+    document_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> list[SimilarDocumentResponse]:
+    """cosine similarity 기반으로 유사 문서 상위 5개를 반환한다.
+
+    pgvector <=> 연산자를 사용하며, 같은 사용자 문서 내에서만 검색한다.
+
+    Raises:
+        401/403: 인증되지 않은 요청.
+        404: 문서를 찾을 수 없거나 embedding이 없는 경우.
+    """
+    return await document_crud_service.get_similar_documents(
+        db=db,
+        document_id=document_id,
+        user_id=current_user.id,
+    )
 
 
 @router.delete("/{document_id}", status_code=204)
