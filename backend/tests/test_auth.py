@@ -7,10 +7,10 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from app.db.base import Base
 from app.db.session import get_db
 from app.main import app
 from app.models.user import User  # noqa: F401 — Alembic autogenerate 감지
+from tests.conftest import create_test_tables
 
 TEST_DB_URL = "sqlite+aiosqlite:///:memory:"
 
@@ -20,14 +20,12 @@ async def db_session():
     """각 테스트마다 인메모리 SQLite DB를 사용하는 세션 픽스처."""
     engine = create_async_engine(TEST_DB_URL, echo=False)
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(create_test_tables)
 
     session_factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
     async with session_factory() as session:
         yield session
 
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
     await engine.dispose()
 
 

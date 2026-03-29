@@ -283,7 +283,7 @@ async def websocket_voice(
         except Exception:
             pass
     finally:
-        # 대화 종료 시각 기록
+        # 대화 종료 시각 기록 + 문서 생성 트리거
         if conversation_id:
             try:
                 async with async_session() as db:
@@ -298,3 +298,36 @@ async def websocket_voice(
                         await db.commit()
             except Exception:
                 pass
+
+            # 트랜스크립트가 있으면 문서 생성 트리거 — 실패 시 대화 종료를 블로킹하지 않음
+            if transcript_parts:
+                try:
+                    from app.models.conversation import Message as ConvMessage
+                    from app.services import document_crud_service, document_service
+
+                    async with async_session() as db:
+                        # DB에서 해당 대화의 메시지 조회
+                        msg_result = await db.execute(
+                            select(ConvMessage).where(
+                                ConvMessage.conversation_id == conversation_id
+                            )
+                        )
+                        messages = list(msg_result.scalars().all())
+                        if messages:
+                            doc_data = await document_service.generate_document(messages)
+                            await document_crud_service.create_document(
+                                db=db,
+                                user_id=user.id,
+                                conversation_id=conversation_id,
+                                title=doc_data["title"],
+                                content=doc_data["content"],
+                                keywords=doc_data.get("keywords"),
+                            )
+                            await db.commit()
+                except Exception as e:
+                    # 문서 생성 실패는 대화 종료를 블로킹하지 않음 — 로깅만
+                    logger.warning(
+                        "[voice] 문서 생성 트리거 실패 (conversation_id=%s): %s",
+                        conversation_id,
+                        e,
+                    )
