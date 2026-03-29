@@ -3,7 +3,7 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  padding: 24px;
+  padding: var(--space-8);
 }
 
 .login-card {
@@ -12,15 +12,15 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: var(--space-6);
 }
 
 .login-logo {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
 }
 
 .login-logo-icon {
@@ -28,26 +28,26 @@
 }
 
 .login-title {
-  font-size: 28px;
-  font-weight: 700;
+  font-size: var(--text-4xl);
+  font-weight: var(--font-bold);
   color: var(--color-text);
   letter-spacing: -0.5px;
 }
 
 .login-subtitle {
-  font-size: 15px;
-  color: #666;
-  margin-bottom: 8px;
+  font-size: var(--text-lg);
+  color: var(--color-text-placeholder);
+  margin-bottom: var(--space-2);
 }
 
 .login-error {
   width: 100%;
-  padding: 12px 16px;
-  background: #FEF2F2;
-  border: 1px solid #FECACA;
+  padding: var(--space-4) var(--space-6);
+  background: var(--color-error-light);
+  border: 1px solid var(--color-error-border);
   border-radius: var(--radius);
-  color: #DC2626;
-  font-size: 14px;
+  color: var(--color-error);
+  font-size: var(--text-md);
   text-align: center;
 }
 
@@ -56,22 +56,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 12px 24px;
-  background: #fff;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-8);
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  font-size: 15px;
-  font-weight: 500;
+  font-size: var(--text-lg);
+  font-weight: var(--font-medium);
   color: var(--color-text);
   cursor: pointer;
-  transition: background 0.15s, box-shadow 0.15s;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: background var(--transition-normal), box-shadow var(--transition-normal);
+  box-shadow: var(--shadow-xs);
 }
 
 .google-login-btn:hover:not(:disabled) {
-  background: #F9FAFB;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  background: var(--color-surface-alt);
+  box-shadow: var(--shadow-sm);
 }
 
 .google-login-btn:disabled {

@@ -1,0 +1,144 @@
+/* ============================================================
+   Voice Map Design Tokens
+   기존 CSS에서 추출한 토큰 기반으로 정의.
+   Stitch 디자인 시스템 연동 시 이 파일의 값을 업데이트한다.
+   ============================================================ */
+
+:root {
+  /* ──────────────────────────────────────────
+     Brand / Primary
+  ────────────────────────────────────────── */
+  --color-primary: #4F46E5;       /* Indigo 600 — 브랜드 메인 */
+  --color-primary-hover: #4338CA; /* Indigo 700 — hover 시 */
+  --color-primary-light: #EDE9FE; /* Indigo 100 — 배경 강조 */
+
+  /* ──────────────────────────────────────────
+     Semantic Status Colors
+  ────────────────────────────────────────── */
+  /* Success */
+  --color-success: #059669;       /* Emerald 600 */
+  --color-success-bg: #D1FAE5;    /* Emerald 100 */
+
+  /* Warning */
+  --color-warning: #D97706;       /* Amber 600 */
+  --color-warning-bg: #FEF3C7;    /* Amber 100 */
+
+  /* Error / Danger */
+  --color-error: #DC2626;         /* Red 600 */
+  --color-error-bg: #FEE2E2;      /* Red 100 */
+  --color-error-border: #FECACA;  /* Red 200 */
+  --color-error-light: #FEF2F2;   /* Red 50 */
+  --color-danger: #EF4444;        /* Red 500 — destructive 액션 */
+
+  /* Info / Blue */
+  --color-info: #3B82F6;          /* Blue 500 */
+  --color-info-bg: #EFF6FF;       /* Blue 50 */
+  --color-info-text: #1E40AF;     /* Blue 800 */
+
+  /* AI / Accent */
+  --color-ai: #6366F1;            /* Indigo 500 — AI 발화 상태 */
+  --color-listening: #10B981;     /* Emerald 500 — 음성 수신 상태 */
+  --color-voice-text: #7C3AED;    /* Violet 700 — 텍스트 모드 뱃지 */
+  --color-voice-text-bg: #EDE9FE; /* Violet 100 */
+
+  /* ──────────────────────────────────────────
+     Neutral Scale (light mode)
+  ────────────────────────────────────────── */
+  --color-white: #FFFFFF;
+  --color-bg: #FAFAFA;            /* 페이지 배경 */
+  --color-surface: #FFFFFF;       /* 카드/헤더/입력 영역 배경 */
+  --color-surface-alt: #F9FAFB;   /* 입력 필드 휴지 배경, hover 등 */
+  --color-surface-hover: #F3F4F6; /* 아이템 hover 상태 */
+  --color-surface-active: #E5E7EB;/* 아이템 active / 인디케이터 기본 */
+  --color-surface-code: #F3F4F6;  /* 코드 블록 헤더 / AI 말풍선 */
+  --color-inline-code-bg: #E5E7EB;/* 인라인 코드 배경 */
+
+  --color-text: #1A1A1A;          /* 본문 텍스트 (primary) */
+  --color-text-strong: #1F2937;   /* 강조 텍스트 */
+  --color-text-secondary: #6B7280;/* 보조 텍스트 */
+  --color-text-muted: #9CA3AF;    /* 비활성/타임스탬프 */
+  --color-text-disabled: #888888; /* disabled 상태 */
+  --color-text-subtle: #555555;   /* 미묘한 강조 */
+  --color-text-placeholder: #666666; /* 플레이스홀더 */
+
+  --color-border: #E5E5E5;        /* 기본 테두리 */
+  --color-border-subtle: #D1D5DB; /* 연한 테두리 (코드 블록 등) */
+  --color-border-blockquote: #D1D5DB; /* 인용문 left border */
+
+  /* ──────────────────────────────────────────
+     Typography
+  ────────────────────────────────────────── */
+  --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', monospace;
+
+  /* Font size scale */
+  --text-xs:   11px;  /* 타임스탬프, 레이블 */
+  --text-sm:   12px;  /* 상태 뱃지, 부가정보 */
+  --text-base: 13px;  /* 버튼, 부가 텍스트 */
+  --text-md:   14px;  /* 메시지 본문, 목록 아이템 */
+  --text-lg:   15px;  /* 버튼 라벨, 주요 액션 */
+  --text-xl:   16px;  /* 서브 헤더 */
+  --text-2xl:  17px;  /* 헤더 타이틀 */
+  --text-3xl:  18px;  /* 섹션 타이틀 */
+  --text-4xl:  28px;  /* 페이지 타이틀 (로그인) */
+
+  /* Font weight */
+  --font-normal:   400;
+  --font-medium:   500;
+  --font-semibold: 600;
+  --font-bold:     700;
+
+  /* Line height */
+  --leading-tight:  1.4;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.6;
+
+  /* ──────────────────────────────────────────
+     Spacing
+  ────────────────────────────────────────── */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  10px;
+  --space-4:  12px;
+  --space-5:  14px;
+  --space-6:  16px;
+  --space-7:  20px;
+  --space-8:  24px;
+  --space-9:  32px;
+  --space-10: 48px;
+  --space-11: 64px;
+
+  /* ──────────────────────────────────────────
+     Border Radius
+  ────────────────────────────────────────── */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;   /* 카드, 주요 컨테이너 — 기존 --radius */
+  --radius-2xl: 16px;  /* 말풍선 */
+  --radius-3xl: 20px;  /* 입력창 */
+  --radius-full: 9999px; /* 원형 뱃지, 아바타 */
+
+  /* 기존 --radius 하위 호환 유지 */
+  --radius: var(--radius-xl);
+
+  /* ──────────────────────────────────────────
+     Shadow
+  ────────────────────────────────────────── */
+  --shadow-xs:  0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-sm:  0 2px 6px rgba(0, 0, 0, 0.12);
+  --shadow-md:  0 4px 16px rgba(0, 0, 0, 0.1);
+
+  /* ──────────────────────────────────────────
+     Touch Target
+  ────────────────────────────────────────── */
+  --touch-target: 44px; /* Capacitor 모바일 최소 터치 타겟 */
+
+  /* ──────────────────────────────────────────
+     Transition
+  ────────────────────────────────────────── */
+  --transition-fast:   0.1s ease;
+  --transition-normal: 0.15s ease;
+  --transition-slow:   0.3s ease;
+}
