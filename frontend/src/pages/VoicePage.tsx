@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useVoiceWebSocket } from "@/hooks/useVoiceWebSocket";
+import Sidebar from "@/components/Sidebar";
 import "@/styles/VoicePage.css";
 
 // BE가 기대하는 오디오 포맷
@@ -67,6 +68,7 @@ export default function VoicePage() {
   const [micPermission, setMicPermission] = useState<"unknown" | "granted" | "denied">("unknown");
   const [turns, setTurns] = useState<ConversationTurn[]>([]);
   const [currentAiText, setCurrentAiText] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const conversationEndRef = useRef<HTMLDivElement>(null);
 
@@ -309,15 +311,26 @@ export default function VoicePage() {
 
   return (
     <div className="voice-page">
+      {/* Sidebar */}
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
       {/* Header */}
       <header className="voice-header">
+        <button
+          className="voice-mode-toggle-btn"
+          onClick={() => setSidebarOpen(true)}
+          aria-label="메뉴 열기"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20" aria-hidden="true">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+        <h1 className="voice-header-title">Voice Map</h1>
         <button className="voice-mode-toggle-btn" onClick={handleModeSwitch}>
           텍스트
         </button>
-        <h1 className="voice-header-title">Voice Map</h1>
-        <span className={`voice-status-badge voice-status-badge--${status}`}>
-          {status === "open" ? "연결됨" : status === "connecting" ? "연결 중" : "연결 끊김"}
-        </span>
       </header>
 
       {/* Main conversation area */}

@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import MessageBubble, { Message } from "@/components/MessageBubble";
+import Sidebar from "@/components/Sidebar";
 import "@/styles/ChatRoom.css";
 
 let messageIdCounter = 0;
@@ -23,7 +23,6 @@ const SUGGESTIONS = [
 ];
 
 export default function ChatRoom() {
-  const { logout } = useAuth();
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
@@ -130,11 +129,6 @@ export default function ChatRoom() {
     setInputText(e.target.value);
     e.target.style.height = "auto";
     e.target.style.height = `${e.target.scrollHeight}px`;
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
   };
 
   return (
@@ -293,56 +287,10 @@ export default function ChatRoom() {
       </div>
 
       {/* Sidebar drawer */}
-      {sidebarOpen && (
-        <div
-          className="sidebar-overlay"
-          onClick={() => setSidebarOpen(false)}
-          role="dialog"
-          aria-modal="true"
-          aria-label="내비게이션 메뉴"
-        >
-          <aside
-            className="sidebar-drawer"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="sidebar-brand">Voice Map</div>
-
-            <button
-              className="sidebar-nav-item"
-              onClick={() => { navigate("/chat"); setSidebarOpen(false); }}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              새 대화
-            </button>
-
-            <button
-              className="sidebar-nav-item"
-              onClick={() => { navigate("/conversations"); setSidebarOpen(false); }}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" />
-                <polyline points="14 2 14 8 20 8" />
-              </svg>
-              대화 목록
-            </button>
-
-            <button
-              className="sidebar-nav-item"
-              onClick={handleLogout}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
-              로그아웃
-            </button>
-          </aside>
-        </div>
-      )}
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
     </div>
   );
 }
