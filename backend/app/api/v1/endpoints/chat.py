@@ -167,7 +167,7 @@ async def websocket_chat(
         except Exception:
             pass
     finally:
-        # 대화 종료 시각 기록
+        # 대화 종료 시각 기록 + 문서 생성 트리거
         if conversation_id:
             try:
                 async with async_session() as db:
@@ -177,7 +177,42 @@ async def websocket_chat(
                     conv = result.scalar_one_or_none()
                     if conv:
                         from datetime import datetime, timezone
+
                         conv.ended_at = datetime.now(timezone.utc)
                         await db.commit()
             except Exception:
                 pass
+
+            # 메시지가 있으면 문서 생성 트리거 — 실패 시 대화 종료를 블로킹하지 않음
+            if history:
+                try:
+                    from app.models.conversation import Message as ConvMessage
+                    from app.services import document_crud_service, document_service
+
+                    async with async_session() as db:
+                        # DB에서 해당 대화의 메시지 조회
+                        msg_result = await db.execute(
+                            select(ConvMessage).where(
+                                ConvMessage.conversation_id == conversation_id
+                            )
+                        )
+                        messages = list(msg_result.scalars().all())
+                        if messages:
+                            doc_data = await document_service.generate_document(messages)
+                            await document_crud_service.create_document(
+                                db=db,
+                                user_id=user.id,
+                                conversation_id=conversation_id,
+                                title=doc_data["title"],
+                                content=doc_data["content"],
+                                keywords=doc_data.get("keywords"),
+                            )
+                            await db.commit()
+                except Exception as e:
+                    # 문서 생성 실패는 대화 종료를 블로킹하지 않음 — 로깅만
+                    import logging
+                    logging.getLogger("chat").warning(
+                        "[chat] 문서 생성 트리거 실패 (conversation_id=%s): %s",
+                        conversation_id,
+                        e,
+                    )

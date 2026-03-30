@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useVoiceWebSocket } from "@/hooks/useVoiceWebSocket";
+import Sidebar from "@/components/Sidebar";
 import "@/styles/VoicePage.css";
 
 // BE가 기대하는 오디오 포맷
@@ -10,6 +11,12 @@ const TARGET_CHANNELS = 1;
 const AI_RESPONSE_SAMPLE_RATE = 24000;
 
 type ConversationState = "connecting" | "listening" | "ai_speaking" | "error";
+
+interface ConversationTurn {
+  id: string;
+  role: "user" | "ai";
+  text: string;
+}
 
 function generateSessionId(): string {
   return crypto.randomUUID();
@@ -59,8 +66,11 @@ export default function VoicePage() {
   const navigate = useNavigate();
   const [convState, setConvState] = useState<ConversationState>("connecting");
   const [micPermission, setMicPermission] = useState<"unknown" | "granted" | "denied">("unknown");
-  const [transcript, setTranscript] = useState("");
+  const [turns, setTurns] = useState<ConversationTurn[]>([]);
+  const [currentAiText, setCurrentAiText] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const conversationEndRef = useRef<HTMLDivElement>(null);
 
   const sessionIdRef = useRef<string>(generateSessionId());
   const wsToken = localStorage.getItem("access_token") ?? "";
@@ -72,7 +82,6 @@ export default function VoicePage() {
   const sourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const isStreamingRef = useRef(false);
   const playbackContextRef = useRef<AudioContext | null>(null);
-  // 오디오 청크 순차 재생을 위한 스케줄링 시간
   const nextPlayTimeRef = useRef(0);
 
   const handleAudio = useCallback(async (base64Pcm: string) => {
@@ -94,7 +103,6 @@ export default function VoicePage() {
       source.buffer = audioBuffer;
       source.connect(ctx.destination);
 
-      // 이전 청크 재생이 끝난 후에 시작하도록 스케줄링
       const now = ctx.currentTime;
       const startTime = Math.max(now, nextPlayTimeRef.current);
       source.start(startTime);
@@ -105,12 +113,22 @@ export default function VoicePage() {
   }, []);
 
   const handleTranscript = useCallback((content: string) => {
-    setTranscript((prev) => prev + content);
+    setCurrentAiText((prev) => prev + content);
   }, []);
 
   const handleTurnComplete = useCallback(() => {
     setConvState("listening");
     nextPlayTimeRef.current = 0;
+    // 완성된 AI 응답을 turns에 추가
+    setCurrentAiText((text) => {
+      if (text) {
+        setTurns((prev) => [
+          ...prev,
+          { id: crypto.randomUUID(), role: "ai", text },
+        ]);
+      }
+      return "";
+    });
   }, []);
 
   const handleWsError = useCallback((msg: string) => {
@@ -119,7 +137,6 @@ export default function VoicePage() {
   }, []);
 
   const handleInterrupted = useCallback(() => {
-    // 사용자 발화 감지 시 현재 재생 중인 AI 오디오를 즉시 중단
     if (playbackContextRef.current && playbackContextRef.current.state !== "closed") {
       void playbackContextRef.current.close();
       playbackContextRef.current = null;
@@ -136,7 +153,6 @@ export default function VoicePage() {
     onInterrupted: handleInterrupted,
   });
 
-  // 마이크 오디오 스트리밍 시작
   const startStreaming = useCallback(async () => {
     if (isStreamingRef.current) return;
     if (!mediaStreamRef.current) return;
@@ -175,7 +191,6 @@ export default function VoicePage() {
     }
   }, [sendAudioChunk]);
 
-  // 마이크 권한 요청
   const requestMicPermission = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -195,7 +210,6 @@ export default function VoicePage() {
     }
   }, []);
 
-  // 마이크 권한 획득 시 자동 요청
   useEffect(() => {
     void requestMicPermission();
     return () => {
@@ -223,12 +237,16 @@ export default function VoicePage() {
     };
   }, [requestMicPermission]);
 
-  // 마이크 + WebSocket 모두 준비되면 자동으로 스트리밍 시작
   useEffect(() => {
     if (micPermission === "granted" && status === "open" && !isStreamingRef.current) {
       void startStreaming();
     }
   }, [micPermission, status, startStreaming]);
+
+  // 새 turn이 추가되면 스크롤
+  useEffect(() => {
+    conversationEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [turns, currentAiText]);
 
   const handleModeSwitch = useCallback(() => {
     isStreamingRef.current = false;
@@ -257,8 +275,8 @@ export default function VoicePage() {
 
   const stateLabel: Record<ConversationState, string> = {
     connecting: "연결 중...",
-    listening: "듣고 있습니다...",
-    ai_speaking: "AI가 말하고 있습니다...",
+    listening: "듣고 있어요...",
+    ai_speaking: "AI가 응답하고 있어요...",
     error: "오류가 발생했습니다",
   };
 
@@ -273,9 +291,7 @@ export default function VoicePage() {
           <div style={{ width: 60 }} />
         </header>
         <div className="voice-permission-error">
-          <div className="voice-permission-error__icon" aria-hidden="true">
-            🎤
-          </div>
+          <div className="voice-permission-error__icon" aria-hidden="true">🎤</div>
           <p className="voice-permission-error__title">마이크 접근 권한이 필요합니다</p>
           <p className="voice-permission-error__desc">
             음성 기능을 사용하려면 마이크 권한을 허용해주세요.
@@ -291,84 +307,145 @@ export default function VoicePage() {
     );
   }
 
+  const hasConversation = turns.length > 0 || currentAiText;
+
   return (
     <div className="voice-page">
+      {/* Sidebar */}
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      {/* Header */}
       <header className="voice-header">
+        <button
+          className="voice-mode-toggle-btn"
+          onClick={() => setSidebarOpen(true)}
+          aria-label="메뉴 열기"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20" aria-hidden="true">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+        <h1 className="voice-header-title">Voice Map</h1>
         <button className="voice-mode-toggle-btn" onClick={handleModeSwitch}>
           텍스트
         </button>
-        <h1 className="voice-header-title">Voice Map</h1>
-        <span className={`voice-status-badge voice-status-badge--${status}`}>
-          {status === "open" ? "연결됨" : status === "connecting" ? "연결 중" : "연결 끊김"}
-        </span>
       </header>
 
+      {/* Main conversation area */}
       <main className="voice-main">
-        <p className="voice-state-label">{stateLabel[convState]}</p>
+        {hasConversation ? (
+          <div className="voice-conversation">
+            {turns.map((turn) =>
+              turn.role === "user" ? (
+                <div key={turn.id} className="voice-turn-user">
+                  <div className="voice-bubble-user">{turn.text}</div>
+                </div>
+              ) : (
+                <div key={turn.id} className="voice-turn-ai">
+                  <div className="voice-ai-label">
+                    <div className="voice-ai-icon">
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5z"/>
+                      </svg>
+                    </div>
+                    <span className="voice-ai-label-text">Voice Map Intelligence</span>
+                  </div>
+                  <p className="voice-bubble-ai">{turn.text}</p>
+                </div>
+              )
+            )}
 
-        <div
-          className={[
-            "voice-indicator",
-            convState === "listening" && "voice-indicator--listening",
-            convState === "ai_speaking" && "voice-indicator--ai-speaking",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-        >
-          {convState === "ai_speaking" ? (
-            <span className="voice-wave-icon" aria-hidden="true">
-              <span className="voice-wave-bar" />
-              <span className="voice-wave-bar" />
-              <span className="voice-wave-bar" />
-              <span className="voice-wave-bar" />
-              <span className="voice-wave-bar" />
-            </span>
-          ) : (
-            <svg
-              className="voice-record-icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-              <line x1="12" y1="19" x2="12" y2="23" />
-              <line x1="8" y1="23" x2="16" y2="23" />
-            </svg>
-          )}
+            {/* Streaming AI response */}
+            {currentAiText && (
+              <div className="voice-turn-ai">
+                <div className="voice-ai-label">
+                  <div className="voice-ai-icon">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5z"/>
+                    </svg>
+                  </div>
+                  <span className="voice-ai-label-text">Voice Map Intelligence</span>
+                </div>
+                <p className="voice-bubble-ai">{currentAiText}</p>
+              </div>
+            )}
+
+            <div ref={conversationEndRef} />
+          </div>
+        ) : (
+          /* Center state view when no conversation yet */
+          <div className="voice-state-center">
+            <p className="voice-state-label">{stateLabel[convState]}</p>
+          </div>
+        )}
+      </main>
+
+      {/* Error banner */}
+      {errorMsg && (
+        <div className="voice-error-banner" role="alert" style={{ position: "fixed", top: 80, left: 16, right: 16, zIndex: 60 }}>
+          오류: {errorMsg}
+        </div>
+      )}
+
+      {/* Bottom interface */}
+      <div className="voice-bottom">
+        {/* Intelligence Orb */}
+        <div className="voice-orb-container">
+          <div className={`voice-orb-wrap voice-indicator--${convState}`}>
+            <div className="voice-orb">
+              {convState === "ai_speaking" ? (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+                  <span className="voice-wave-icon" aria-hidden="true">
+                    <span className="voice-wave-bar" />
+                    <span className="voice-wave-bar" />
+                    <span className="voice-wave-bar" />
+                    <span className="voice-wave-bar" />
+                    <span className="voice-wave-bar" />
+                  </span>
+                </div>
+              ) : (
+                <div className="voice-orb-inner" />
+              )}
+            </div>
+          </div>
         </div>
 
-        <p className="voice-hint">
-          {convState === "listening"
-            ? "자유롭게 말씀하세요"
-            : convState === "ai_speaking"
-            ? "잠시 기다려주세요"
-            : convState === "connecting"
-            ? "마이크와 서버에 연결하고 있습니다"
-            : ""}
-        </p>
+        {/* Input control bar */}
+        <div className="voice-control-bar">
+          {/* Attach button */}
+          <button className="voice-icon-btn voice-icon-btn--light" aria-label="문서 첨부">
+            📄
+          </button>
 
-        {transcript && (
-          <div className="voice-transcript">
-            <p className="voice-transcript__label">트랜스크립트</p>
-            <p className="voice-transcript__text">{transcript}</p>
+          {/* Text input */}
+          <div className="voice-input-wrap">
+            <input
+              type="text"
+              placeholder="아이디어를 말해보세요..."
+              aria-label="텍스트 입력"
+            />
+            <button className="voice-input-mic-btn" aria-label="음성 입력 활성화">
+              {/* mic filled */}
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5zm6 6c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+              </svg>
+            </button>
           </div>
-        )}
 
-        {errorMsg && (
-          <div className="voice-error-banner" role="alert">
-            오류: {errorMsg}
-          </div>
-        )}
-
-        <button className="voice-end-session-btn" onClick={handleEndSession}>
-          대화 종료
-        </button>
-      </main>
+          {/* End / close button */}
+          <button
+            className="voice-icon-btn voice-icon-btn--dark"
+            onClick={handleEndSession}
+            aria-label="대화 종료"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" aria-hidden="true">
+              <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

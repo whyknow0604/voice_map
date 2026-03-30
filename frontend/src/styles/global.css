@@ -1,11 +1,4 @@
-:root {
-  --color-primary: #4F46E5;
-  --color-bg: #FAFAFA;
-  --color-text: #1A1A1A;
-  --color-border: #E5E5E5;
-  --radius: 12px;
-  --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-}
+/* 디자인 토큰은 design-tokens.css에서 정의됨 */
 
 * {
   margin: 0;

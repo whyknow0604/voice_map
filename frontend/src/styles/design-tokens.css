@@ -1,0 +1,211 @@
+/* ============================================================
+   Voice Map Design Tokens
+   Stitch "Editorial Intelligence" 디자인 시스템 기반
+   ============================================================ */
+
+:root {
+  /* ──────────────────────────────────────────
+     Stitch Color Tokens (Primary)
+  ────────────────────────────────────────── */
+  --color-primary: #3525CD;
+  --color-primary-container: #4F46E5;
+  --color-on-primary: #FFFFFF;
+  --color-on-primary-container: #DAD7FF;
+  --color-primary-fixed: #E2DFFF;
+  --color-primary-fixed-dim: #C3C0FF;
+  --color-on-primary-fixed: #0F0069;
+  --color-on-primary-fixed-variant: #3323CC;
+  --color-primary-hover: #4338CA;
+
+  /* ──────────────────────────────────────────
+     Secondary
+  ────────────────────────────────────────── */
+  --color-secondary: #575E70;
+  --color-on-secondary: #FFFFFF;
+  --color-secondary-container: #D9DFF5;
+  --color-on-secondary-container: #5C6274;
+  --color-secondary-fixed: #DCE2F7;
+  --color-secondary-fixed-dim: #C0C6DB;
+  --color-on-secondary-fixed: #141B2B;
+  --color-on-secondary-fixed-variant: #404758;
+
+  /* ──────────────────────────────────────────
+     Tertiary
+  ────────────────────────────────────────── */
+  --color-tertiary: #434853;
+  --color-on-tertiary: #FFFFFF;
+  --color-tertiary-container: #5B606B;
+  --color-on-tertiary-container: #D7DBE8;
+  --color-tertiary-fixed: #DEE2EF;
+  --color-tertiary-fixed-dim: #C2C6D3;
+  --color-on-tertiary-fixed: #171C25;
+  --color-on-tertiary-fixed-variant: #424751;
+
+  /* ──────────────────────────────────────────
+     Surface Hierarchy (No-Line Rule)
+  ────────────────────────────────────────── */
+  --color-surface: #F9F9FA;
+  --color-surface-bright: #F9F9FA;
+  --color-surface-dim: #DADADB;
+  --color-surface-container-lowest: #FFFFFF;
+  --color-surface-container-low: #F3F3F4;
+  --color-surface-container: #EEEEEF;
+  --color-surface-container-high: #E8E8E9;
+  --color-surface-container-highest: #E2E2E3;
+  --color-surface-variant: #E2E2E3;
+  --color-surface-tint: #4D44E3;
+
+  /* ──────────────────────────────────────────
+     On-Surface
+  ────────────────────────────────────────── */
+  --color-on-surface: #1A1C1D;
+  --color-on-surface-variant: #464555;
+  --color-background: #F9F9FA;
+  --color-on-background: #1A1C1D;
+
+  /* ──────────────────────────────────────────
+     Inverse
+  ────────────────────────────────────────── */
+  --color-inverse-surface: #2F3132;
+  --color-inverse-on-surface: #F0F1F2;
+  --color-inverse-primary: #C3C0FF;
+
+  /* ──────────────────────────────────────────
+     Outline
+  ────────────────────────────────────────── */
+  --color-outline: #777587;
+  --color-outline-variant: #C7C4D8;
+
+  /* ──────────────────────────────────────────
+     Error
+  ────────────────────────────────────────── */
+  --color-error: #BA1A1A;
+  --color-on-error: #FFFFFF;
+  --color-error-container: #FFDAD6;
+  --color-on-error-container: #93000A;
+
+  /* ──────────────────────────────────────────
+     Semantic Status Colors (하위 호환)
+  ────────────────────────────────────────── */
+  --color-success: #059669;
+  --color-success-bg: #D1FAE5;
+  --color-warning: #D97706;
+  --color-warning-bg: #FEF3C7;
+  --color-error-bg: #FFDAD6;
+  --color-error-border: #FECACA;
+  --color-error-light: #FEF2F2;
+  --color-danger: #BA1A1A;
+  --color-info: #3B82F6;
+  --color-info-bg: #EFF6FF;
+  --color-info-text: #1E40AF;
+
+  /* AI / Voice 상태 */
+  --color-ai: #4F46E5;
+  --color-listening: #10B981;
+  --color-voice-text: #7C3AED;
+  --color-voice-text-bg: #EDE9FE;
+
+  /* ──────────────────────────────────────────
+     Dark Navy (Voice Modal)
+  ────────────────────────────────────────── */
+  --color-dark-navy: #111827;
+
+  /* ──────────────────────────────────────────
+     Legacy Neutral (하위 호환)
+  ────────────────────────────────────────── */
+  --color-white: #FFFFFF;
+  --color-bg: #F9F9FA;
+  --color-surface-alt: #F3F3F4;
+  --color-surface-hover: #E8E8E9;
+  --color-surface-active: #E2E2E3;
+  --color-surface-code: #EEEEEF;
+  --color-inline-code-bg: #E5E7EB;
+  --color-text: #1A1C1D;
+  --color-text-strong: #1A1C1D;
+  --color-text-secondary: #464555;
+  --color-text-muted: #777587;
+  --color-text-disabled: #9CA3AF;
+  --color-text-subtle: #464555;
+  --color-text-placeholder: #777587;
+  --color-border: #C7C4D8;
+  --color-border-subtle: #C7C4D8;
+  --color-border-blockquote: #C7C4D8;
+
+  /* ──────────────────────────────────────────
+     Typography
+  ────────────────────────────────────────── */
+  --font-sans: 'Inter', 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', monospace;
+
+  /* Font size scale */
+  --text-xs:   11px;
+  --text-sm:   12px;
+  --text-base: 13px;
+  --text-md:   14px;
+  --text-lg:   15px;
+  --text-xl:   16px;
+  --text-2xl:  17px;
+  --text-3xl:  18px;
+  --text-4xl:  28px;
+
+  /* Font weight */
+  --font-normal:   400;
+  --font-medium:   500;
+  --font-semibold: 600;
+  --font-bold:     700;
+
+  /* Line height */
+  --leading-tight:  1.4;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.6;
+
+  /* ──────────────────────────────────────────
+     Spacing
+  ────────────────────────────────────────── */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  10px;
+  --space-4:  12px;
+  --space-5:  14px;
+  --space-6:  16px;
+  --space-7:  20px;
+  --space-8:  24px;
+  --space-9:  32px;
+  --space-10: 48px;
+  --space-11: 64px;
+
+  /* ──────────────────────────────────────────
+     Border Radius
+  ────────────────────────────────────────── */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-3xl: 20px;
+  --radius-4xl: 24px;
+  --radius-full: 9999px;
+  --radius: var(--radius-xl);
+
+  /* ──────────────────────────────────────────
+     Shadow (Ambient Shadow)
+  ────────────────────────────────────────── */
+  --shadow-xs:  0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-sm:  0 2px 6px rgba(0, 0, 0, 0.12);
+  --shadow-md:  0 4px 16px rgba(0, 0, 0, 0.1);
+  --shadow-editorial: 0px 12px 32px rgba(17, 24, 39, 0.06);
+  --shadow-primary: 0px 8px 20px rgba(79, 70, 229, 0.15);
+
+  /* ──────────────────────────────────────────
+     Touch Target
+  ────────────────────────────────────────── */
+  --touch-target: 44px;
+
+  /* ──────────────────────────────────────────
+     Transition
+  ────────────────────────────────────────── */
+  --transition-fast:   0.1s ease;
+  --transition-normal: 0.15s ease;
+  --transition-slow:   0.3s ease;
+}
