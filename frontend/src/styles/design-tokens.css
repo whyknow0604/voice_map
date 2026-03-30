@@ -1,86 +1,152 @@
 /* ============================================================
    Voice Map Design Tokens
-   기존 CSS에서 추출한 토큰 기반으로 정의.
-   Stitch 디자인 시스템 연동 시 이 파일의 값을 업데이트한다.
+   Stitch "Editorial Intelligence" 디자인 시스템 기반
    ============================================================ */
 
 :root {
   /* ──────────────────────────────────────────
-     Brand / Primary
+     Stitch Color Tokens (Primary)
   ────────────────────────────────────────── */
-  --color-primary: #4F46E5;       /* Indigo 600 — 브랜드 메인 */
-  --color-primary-hover: #4338CA; /* Indigo 700 — hover 시 */
-  --color-primary-light: #EDE9FE; /* Indigo 100 — 배경 강조 */
+  --color-primary: #3525CD;
+  --color-primary-container: #4F46E5;
+  --color-on-primary: #FFFFFF;
+  --color-on-primary-container: #DAD7FF;
+  --color-primary-fixed: #E2DFFF;
+  --color-primary-fixed-dim: #C3C0FF;
+  --color-on-primary-fixed: #0F0069;
+  --color-on-primary-fixed-variant: #3323CC;
+  --color-primary-hover: #4338CA;
 
   /* ──────────────────────────────────────────
-     Semantic Status Colors
+     Secondary
   ────────────────────────────────────────── */
-  /* Success */
-  --color-success: #059669;       /* Emerald 600 */
-  --color-success-bg: #D1FAE5;    /* Emerald 100 */
-
-  /* Warning */
-  --color-warning: #D97706;       /* Amber 600 */
-  --color-warning-bg: #FEF3C7;    /* Amber 100 */
-
-  /* Error / Danger */
-  --color-error: #DC2626;         /* Red 600 */
-  --color-error-bg: #FEE2E2;      /* Red 100 */
-  --color-error-border: #FECACA;  /* Red 200 */
-  --color-error-light: #FEF2F2;   /* Red 50 */
-  --color-danger: #EF4444;        /* Red 500 — destructive 액션 */
-
-  /* Info / Blue */
-  --color-info: #3B82F6;          /* Blue 500 */
-  --color-info-bg: #EFF6FF;       /* Blue 50 */
-  --color-info-text: #1E40AF;     /* Blue 800 */
-
-  /* AI / Accent */
-  --color-ai: #6366F1;            /* Indigo 500 — AI 발화 상태 */
-  --color-listening: #10B981;     /* Emerald 500 — 음성 수신 상태 */
-  --color-voice-text: #7C3AED;    /* Violet 700 — 텍스트 모드 뱃지 */
-  --color-voice-text-bg: #EDE9FE; /* Violet 100 */
+  --color-secondary: #575E70;
+  --color-on-secondary: #FFFFFF;
+  --color-secondary-container: #D9DFF5;
+  --color-on-secondary-container: #5C6274;
+  --color-secondary-fixed: #DCE2F7;
+  --color-secondary-fixed-dim: #C0C6DB;
+  --color-on-secondary-fixed: #141B2B;
+  --color-on-secondary-fixed-variant: #404758;
 
   /* ──────────────────────────────────────────
-     Neutral Scale (light mode)
+     Tertiary
+  ────────────────────────────────────────── */
+  --color-tertiary: #434853;
+  --color-on-tertiary: #FFFFFF;
+  --color-tertiary-container: #5B606B;
+  --color-on-tertiary-container: #D7DBE8;
+  --color-tertiary-fixed: #DEE2EF;
+  --color-tertiary-fixed-dim: #C2C6D3;
+  --color-on-tertiary-fixed: #171C25;
+  --color-on-tertiary-fixed-variant: #424751;
+
+  /* ──────────────────────────────────────────
+     Surface Hierarchy (No-Line Rule)
+  ────────────────────────────────────────── */
+  --color-surface: #F9F9FA;
+  --color-surface-bright: #F9F9FA;
+  --color-surface-dim: #DADADB;
+  --color-surface-container-lowest: #FFFFFF;
+  --color-surface-container-low: #F3F3F4;
+  --color-surface-container: #EEEEEF;
+  --color-surface-container-high: #E8E8E9;
+  --color-surface-container-highest: #E2E2E3;
+  --color-surface-variant: #E2E2E3;
+  --color-surface-tint: #4D44E3;
+
+  /* ──────────────────────────────────────────
+     On-Surface
+  ────────────────────────────────────────── */
+  --color-on-surface: #1A1C1D;
+  --color-on-surface-variant: #464555;
+  --color-background: #F9F9FA;
+  --color-on-background: #1A1C1D;
+
+  /* ──────────────────────────────────────────
+     Inverse
+  ────────────────────────────────────────── */
+  --color-inverse-surface: #2F3132;
+  --color-inverse-on-surface: #F0F1F2;
+  --color-inverse-primary: #C3C0FF;
+
+  /* ──────────────────────────────────────────
+     Outline
+  ────────────────────────────────────────── */
+  --color-outline: #777587;
+  --color-outline-variant: #C7C4D8;
+
+  /* ──────────────────────────────────────────
+     Error
+  ────────────────────────────────────────── */
+  --color-error: #BA1A1A;
+  --color-on-error: #FFFFFF;
+  --color-error-container: #FFDAD6;
+  --color-on-error-container: #93000A;
+
+  /* ──────────────────────────────────────────
+     Semantic Status Colors (하위 호환)
+  ────────────────────────────────────────── */
+  --color-success: #059669;
+  --color-success-bg: #D1FAE5;
+  --color-warning: #D97706;
+  --color-warning-bg: #FEF3C7;
+  --color-error-bg: #FFDAD6;
+  --color-error-border: #FECACA;
+  --color-error-light: #FEF2F2;
+  --color-danger: #BA1A1A;
+  --color-info: #3B82F6;
+  --color-info-bg: #EFF6FF;
+  --color-info-text: #1E40AF;
+
+  /* AI / Voice 상태 */
+  --color-ai: #4F46E5;
+  --color-listening: #10B981;
+  --color-voice-text: #7C3AED;
+  --color-voice-text-bg: #EDE9FE;
+
+  /* ──────────────────────────────────────────
+     Dark Navy (Voice Modal)
+  ────────────────────────────────────────── */
+  --color-dark-navy: #111827;
+
+  /* ──────────────────────────────────────────
+     Legacy Neutral (하위 호환)
   ────────────────────────────────────────── */
   --color-white: #FFFFFF;
-  --color-bg: #FAFAFA;            /* 페이지 배경 */
-  --color-surface: #FFFFFF;       /* 카드/헤더/입력 영역 배경 */
-  --color-surface-alt: #F9FAFB;   /* 입력 필드 휴지 배경, hover 등 */
-  --color-surface-hover: #F3F4F6; /* 아이템 hover 상태 */
-  --color-surface-active: #E5E7EB;/* 아이템 active / 인디케이터 기본 */
-  --color-surface-code: #F3F4F6;  /* 코드 블록 헤더 / AI 말풍선 */
-  --color-inline-code-bg: #E5E7EB;/* 인라인 코드 배경 */
-
-  --color-text: #1A1A1A;          /* 본문 텍스트 (primary) */
-  --color-text-strong: #1F2937;   /* 강조 텍스트 */
-  --color-text-secondary: #6B7280;/* 보조 텍스트 */
-  --color-text-muted: #9CA3AF;    /* 비활성/타임스탬프 */
-  --color-text-disabled: #888888; /* disabled 상태 */
-  --color-text-subtle: #555555;   /* 미묘한 강조 */
-  --color-text-placeholder: #666666; /* 플레이스홀더 */
-
-  --color-border: #E5E5E5;        /* 기본 테두리 */
-  --color-border-subtle: #D1D5DB; /* 연한 테두리 (코드 블록 등) */
-  --color-border-blockquote: #D1D5DB; /* 인용문 left border */
+  --color-bg: #F9F9FA;
+  --color-surface-alt: #F3F3F4;
+  --color-surface-hover: #E8E8E9;
+  --color-surface-active: #E2E2E3;
+  --color-surface-code: #EEEEEF;
+  --color-inline-code-bg: #E5E7EB;
+  --color-text: #1A1C1D;
+  --color-text-strong: #1A1C1D;
+  --color-text-secondary: #464555;
+  --color-text-muted: #777587;
+  --color-text-disabled: #9CA3AF;
+  --color-text-subtle: #464555;
+  --color-text-placeholder: #777587;
+  --color-border: #C7C4D8;
+  --color-border-subtle: #C7C4D8;
+  --color-border-blockquote: #C7C4D8;
 
   /* ──────────────────────────────────────────
      Typography
   ────────────────────────────────────────── */
-  --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-sans: 'Inter', 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --font-mono: 'SF Mono', 'Fira Code', monospace;
 
   /* Font size scale */
-  --text-xs:   11px;  /* 타임스탬프, 레이블 */
-  --text-sm:   12px;  /* 상태 뱃지, 부가정보 */
-  --text-base: 13px;  /* 버튼, 부가 텍스트 */
-  --text-md:   14px;  /* 메시지 본문, 목록 아이템 */
-  --text-lg:   15px;  /* 버튼 라벨, 주요 액션 */
-  --text-xl:   16px;  /* 서브 헤더 */
-  --text-2xl:  17px;  /* 헤더 타이틀 */
-  --text-3xl:  18px;  /* 섹션 타이틀 */
-  --text-4xl:  28px;  /* 페이지 타이틀 (로그인) */
+  --text-xs:   11px;
+  --text-sm:   12px;
+  --text-base: 13px;
+  --text-md:   14px;
+  --text-lg:   15px;
+  --text-xl:   16px;
+  --text-2xl:  17px;
+  --text-3xl:  18px;
+  --text-4xl:  28px;
 
   /* Font weight */
   --font-normal:   400;
@@ -115,25 +181,26 @@
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 10px;
-  --radius-xl: 12px;   /* 카드, 주요 컨테이너 — 기존 --radius */
-  --radius-2xl: 16px;  /* 말풍선 */
-  --radius-3xl: 20px;  /* 입력창 */
-  --radius-full: 9999px; /* 원형 뱃지, 아바타 */
-
-  /* 기존 --radius 하위 호환 유지 */
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-3xl: 20px;
+  --radius-4xl: 24px;
+  --radius-full: 9999px;
   --radius: var(--radius-xl);
 
   /* ──────────────────────────────────────────
-     Shadow
+     Shadow (Ambient Shadow)
   ────────────────────────────────────────── */
   --shadow-xs:  0 1px 3px rgba(0, 0, 0, 0.08);
   --shadow-sm:  0 2px 6px rgba(0, 0, 0, 0.12);
   --shadow-md:  0 4px 16px rgba(0, 0, 0, 0.1);
+  --shadow-editorial: 0px 12px 32px rgba(17, 24, 39, 0.06);
+  --shadow-primary: 0px 8px 20px rgba(79, 70, 229, 0.15);
 
   /* ──────────────────────────────────────────
      Touch Target
   ────────────────────────────────────────── */
-  --touch-target: 44px; /* Capacitor 모바일 최소 터치 타겟 */
+  --touch-target: 44px;
 
   /* ──────────────────────────────────────────
      Transition
