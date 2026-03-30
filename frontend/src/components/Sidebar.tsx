@@ -91,7 +91,7 @@ export default function Sidebar({ isOpen, onClose, activeConversationId }: Sideb
           <div className="sidebar-nav-section">
             <button
               className="sidebar-nav-item"
-              onClick={handleConversations}
+              onClick={() => { onClose(); navigate("/documents"); }}
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" />
@@ -99,7 +99,10 @@ export default function Sidebar({ isOpen, onClose, activeConversationId }: Sideb
               </svg>
               내 문서
             </button>
-            <button className="sidebar-nav-item" onClick={onClose}>
+            <button
+              className="sidebar-nav-item"
+              onClick={() => { onClose(); navigate("/graph"); }}
+            >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <circle cx="12" cy="12" r="3" />
                 <path d="M12 2L12 5" />

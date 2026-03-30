@@ -93,7 +93,7 @@ export default function DocumentDetail() {
       <main style={styles.main}>
         <h1 style={styles.title}>{doc.title}</h1>
 
-        {doc.keywords.length > 0 && (
+        {doc.keywords && doc.keywords.length > 0 && (
           <div style={styles.tagRow}>
             {doc.keywords.map((kw) => (
               <span key={kw} style={styles.tag}>

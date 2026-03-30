@@ -78,7 +78,7 @@ export default function DocumentList() {
                 onClick={() => navigate(`/documents/${doc.id}`)}
               >
                 <h2 style={styles.cardTitle}>{doc.title}</h2>
-                {doc.keywords.length > 0 && (
+                {doc.keywords && doc.keywords.length > 0 && (
                   <div style={styles.tagRow}>
                     {doc.keywords.slice(0, 4).map((kw) => (
                       <span key={kw} style={styles.tag}>
