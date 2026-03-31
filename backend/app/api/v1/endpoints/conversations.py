@@ -1,9 +1,11 @@
 """Conversation CRUD 엔드포인트."""
 
+import logging
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import get_current_user
@@ -15,6 +17,8 @@ from app.schemas.conversation import (
     ConversationResponse,
 )
 from app.services import conversation_service
+
+logger = logging.getLogger("conversations")
 
 router = APIRouter()
 
@@ -49,7 +53,26 @@ async def list_conversations(
     Raises:
         401/403: 인증되지 않은 요청.
     """
-    conversations = await conversation_service.get_conversations(db=db, user_id=current_user.id)
+    try:
+        conversations = await conversation_service.get_conversations(
+            db=db, user_id=current_user.id
+        )
+    except OperationalError as e:
+        logger.warning("[conversations] DB 연결 실패, 재시도: %s", e)
+        # connection pool cold start — rollback 후 재시도
+        await db.rollback()
+        conversations = await conversation_service.get_conversations(
+            db=db, user_id=current_user.id
+        )
+    except Exception as e:
+        logger.error("[conversations] 대화 목록 조회 실패: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "code": "CONVERSATIONS_FETCH_ERROR",
+                "message": "대화 목록을 불러올 수 없습니다.",
+            },
+        ) from e
     return [ConversationResponse.model_validate(c) for c in conversations]
 
 

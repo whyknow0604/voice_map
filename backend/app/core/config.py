@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL: str = "gemini-2.0-flash"
     GEMINI_LIVE_MODEL: str = "gemini-3.1-flash-live-preview"
-    GEMINI_EMBEDDING_MODEL: str = "text-embedding-004"
+    GEMINI_EMBEDDING_MODEL: str = "gemini-embedding-001"
 
     # CORS
     ALLOWED_ORIGINS: list[str] = [

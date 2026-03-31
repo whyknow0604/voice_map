@@ -92,6 +92,7 @@ async def websocket_chat(
 
     # 첫 메시지 수신 시에만 Conversation 생성 (빈 대화 방지)
     conversation_id: uuid.UUID | None = None
+    first_user_message: str | None = None
 
     try:
         while True:
@@ -107,6 +108,7 @@ async def websocket_chat(
 
             # 첫 메시지 시 대화 세션 생성 (lazy)
             if conversation_id is None:
+                first_user_message = user_text
                 async with async_session() as db:
                     conversation = Conversation(
                         user_id=user.id, mode=ConversationMode.text
@@ -167,7 +169,7 @@ async def websocket_chat(
         except Exception:
             pass
     finally:
-        # 대화 종료 시각 기록 + 문서 생성 트리거
+        # 대화 종료 시각 기록 + 제목 자동 생성 + 문서 생성 트리거
         if conversation_id:
             try:
                 async with async_session() as db:
@@ -177,11 +179,20 @@ async def websocket_chat(
                     conv = result.scalar_one_or_none()
                     if conv:
                         from datetime import datetime, timezone
+                        import logging
 
                         conv.ended_at = datetime.now(timezone.utc)
+                        # 대화 제목 자동 생성: 첫 사용자 메시지의 앞 50자
+                        if not conv.title and first_user_message:
+                            conv.title = first_user_message[:50]
+                        logging.getLogger("chat").warning(
+                            "[chat] title 설정: %r (first_msg=%r)",
+                            conv.title, first_user_message,
+                        )
                         await db.commit()
-            except Exception:
-                pass
+            except Exception as e:
+                import logging
+                logging.getLogger("chat").error("[chat] finally 에러: %s", e)
 
             # 메시지가 있으면 문서 생성 트리거 — 실패 시 대화 종료를 블로킹하지 않음
             if history:
@@ -207,6 +218,15 @@ async def websocket_chat(
                                 content=doc_data["content"],
                                 keywords=doc_data.get("keywords"),
                             )
+                            # 문서 제목을 대화 제목에도 반영 (AI 생성 제목이 더 나음)
+                            conv_result = await db.execute(
+                                select(Conversation).where(
+                                    Conversation.id == conversation_id
+                                )
+                            )
+                            conv = conv_result.scalar_one_or_none()
+                            if conv and doc_data.get("title"):
+                                conv.title = doc_data["title"]
                             await db.commit()
                 except Exception as e:
                     # 문서 생성 실패는 대화 종료를 블로킹하지 않음 — 로깅만

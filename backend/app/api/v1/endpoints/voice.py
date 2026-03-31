@@ -283,7 +283,7 @@ async def websocket_voice(
         except Exception:
             pass
     finally:
-        # 대화 종료 시각 기록 + 문서 생성 트리거
+        # 대화 종료 시각 기록 + 제목 자동 생성 + 문서 생성 트리거
         if conversation_id:
             try:
                 async with async_session() as db:
@@ -295,6 +295,9 @@ async def websocket_voice(
                     conv = result.scalar_one_or_none()
                     if conv:
                         conv.ended_at = datetime.now(timezone.utc)
+                        # 대화 제목 자동 생성: 트랜스크립트의 앞 50자
+                        if not conv.title and transcript_parts:
+                            conv.title = "".join(transcript_parts)[:50]
                         await db.commit()
             except Exception:
                 pass
@@ -323,6 +326,15 @@ async def websocket_voice(
                                 content=doc_data["content"],
                                 keywords=doc_data.get("keywords"),
                             )
+                            # 문서 제목을 대화 제목에도 반영 (AI 생성 제목이 더 나음)
+                            conv_result = await db.execute(
+                                select(Conversation).where(
+                                    Conversation.id == conversation_id
+                                )
+                            )
+                            conv = conv_result.scalar_one_or_none()
+                            if conv and doc_data.get("title"):
+                                conv.title = doc_data["title"]
                             await db.commit()
                 except Exception as e:
                     # 문서 생성 실패는 대화 종료를 블로킹하지 않음 — 로깅만
