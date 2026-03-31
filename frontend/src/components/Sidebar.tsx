@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import api from "@/services/api";
 import "@/styles/Sidebar.css";
 
 interface SidebarProps {
@@ -8,25 +10,32 @@ interface SidebarProps {
   activeConversationId?: string;
 }
 
-const RECENT_CONVERSATIONS = [
-  { id: "1", title: "AI 스타트업 수익 모델 정리" },
-  { id: "2", title: "GraphRAG 기술 검토" },
-  { id: "3", title: "Q2 마케팅 전략..." },
-  { id: "4", title: "사용자 인터뷰..." },
-  { id: "5", title: "프로덕트 로드맵..." },
-];
+interface Conversation {
+  id: string;
+  title: string;
+}
 
 export default function Sidebar({ isOpen, onClose, activeConversationId }: SidebarProps) {
   const navigate = useNavigate();
   const { logout } = useAuth();
 
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setLoading(true);
+    setError(null);
+    api
+      .get<Conversation[]>("/conversations", { params: { limit: 5 } })
+      .then((res) => setConversations(res.data))
+      .catch(() => setError("대화 목록을 불러오지 못했습니다."))
+      .finally(() => setLoading(false));
+  }, [isOpen]);
+
   const handleNewChat = () => {
     navigate("/chat");
-    onClose();
-  };
-
-  const handleConversations = () => {
-    navigate("/conversations");
     onClose();
   };
 
@@ -122,7 +131,12 @@ export default function Sidebar({ isOpen, onClose, activeConversationId }: Sideb
           <div className="sidebar-history-section">
             <p className="sidebar-section-label">최근 대화</p>
             <div className="sidebar-history-list">
-              {RECENT_CONVERSATIONS.map((conv) => (
+              {loading && <p className="sidebar-history-loading">불러오는 중...</p>}
+              {error && <p className="sidebar-history-error">{error}</p>}
+              {!loading && !error && conversations.length === 0 && (
+                <p className="sidebar-history-empty">최근 대화가 없습니다.</p>
+              )}
+              {!loading && !error && conversations.map((conv) => (
                 <button
                   key={conv.id}
                   className={`sidebar-history-item${activeConversationId === conv.id ? " sidebar-history-item--active" : ""}`}
@@ -151,6 +165,16 @@ export default function Sidebar({ isOpen, onClose, activeConversationId }: Sideb
             <button
               className="sidebar-settings-btn"
               aria-label="설정"
+              onClick={() => { onClose(); navigate("/settings"); }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
+            </button>
+            <button
+              className="sidebar-logout-btn"
+              aria-label="로그아웃"
               onClick={handleLogout}
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

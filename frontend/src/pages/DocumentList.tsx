@@ -5,7 +5,7 @@ import api from "@/services/api";
 interface Document {
   id: string;
   title: string;
-  keywords: string[];
+  keywords: string[] | null;
   created_at: string;
 }
 

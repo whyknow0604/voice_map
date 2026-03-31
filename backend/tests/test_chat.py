@@ -3,8 +3,9 @@
 import json
 import uuid
 from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -38,13 +39,37 @@ def _make_mock_client(stream_fn) -> MagicMock:
     return mock
 
 
+def _make_mock_async_session():
+    """DB 없이 async_session을 mock하는 context manager.
+
+    Conversation 생성 시 fake id를 부여하고 commit/refresh를 no-op 처리.
+    """
+    @asynccontextmanager
+    async def mock_session():
+        session = AsyncMock()
+
+        async def fake_refresh(obj):
+            if hasattr(obj, "id") and obj.id is None:
+                obj.id = uuid.uuid4()
+
+        session.refresh = fake_refresh
+        session.commit = AsyncMock()
+        session.add = MagicMock()
+        session.execute = AsyncMock(
+            return_value=MagicMock(scalar_one_or_none=MagicMock(return_value=None))
+        )
+        yield session
+
+    return mock_session
+
+
 @pytest.mark.asyncio(loop_scope="function")
 class TestWebSocketChat:
     async def test_unauthenticated_connection_is_rejected(self):
         """유효하지 않은 토큰으로 연결 시 거부 (1008)."""
         with TestClient(app) as client:
             with pytest.raises(WebSocketDisconnect) as exc_info:
-                with client.websocket_connect("/api/v1/ws/chat?token=invalid-token"):
+                with client.websocket_connect("/ws/chat?token=invalid-token"):
                     pass
         assert exc_info.value.code == 1008
 
@@ -67,9 +92,10 @@ class TestWebSocketChat:
             patch.object(
                 chat_module, "_get_gemini_client", return_value=_make_mock_client(stream_fn)
             ),
+            patch("app.api.v1.endpoints.chat.async_session", _make_mock_async_session()),
         ):
             with TestClient(app) as client:
-                with client.websocket_connect(f"/api/v1/ws/chat?token={token}") as ws:
+                with client.websocket_connect(f"/ws/chat?token={token}") as ws:
                     ws.send_text("안녕하세요")
 
                     received_chunks = []
@@ -111,10 +137,11 @@ class TestWebSocketChat:
                 "_get_gemini_client",
                 return_value=_make_mock_client(mock_stream_with_history),
             ),
+            patch("app.api.v1.endpoints.chat.async_session", _make_mock_async_session()),
         ):
             with TestClient(app) as client:
                 with client.websocket_connect(
-                    f"/api/v1/ws/chat?token={token}&session_id={session_id}"
+                    f"/ws/chat?token={token}&session_id={session_id}"
                 ) as ws:
                     ws.send_text("첫 번째 메시지")
                     while True:
@@ -150,9 +177,10 @@ class TestWebSocketChat:
                 "_get_gemini_client",
                 return_value=_make_mock_client(failing_stream),
             ),
+            patch("app.api.v1.endpoints.chat.async_session", _make_mock_async_session()),
         ):
             with TestClient(app) as client:
-                with client.websocket_connect(f"/api/v1/ws/chat?token={token}") as ws:
+                with client.websocket_connect(f"/ws/chat?token={token}") as ws:
                     ws.send_text("테스트 메시지")
 
                     received_types = []
@@ -175,6 +203,6 @@ class TestJWTAuthForWebSocket:
         refresh_token = create_refresh_token(user.id)
         with TestClient(app) as client:
             with pytest.raises(WebSocketDisconnect) as exc_info:
-                with client.websocket_connect(f"/api/v1/ws/chat?token={refresh_token}"):
+                with client.websocket_connect(f"/ws/chat?token={refresh_token}"):
                     pass
         assert exc_info.value.code == 1008

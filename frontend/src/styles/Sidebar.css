@@ -306,6 +306,45 @@
   height: 20px;
 }
 
+.sidebar-logout-btn {
+  width: var(--touch-target);
+  height: var(--touch-target);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: var(--radius-full);
+  color: var(--color-on-surface-variant);
+  cursor: pointer;
+  transition: color var(--transition-normal), background var(--transition-normal);
+  flex-shrink: 0;
+}
+
+.sidebar-logout-btn:hover {
+  color: var(--color-error, #d32f2f);
+  background: var(--color-surface-container-low);
+}
+
+.sidebar-logout-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ─── History states ────────────────────────────── */
+.sidebar-history-loading,
+.sidebar-history-error,
+.sidebar-history-empty {
+  font-size: var(--text-sm);
+  color: var(--color-on-surface-variant);
+  padding: var(--space-4) var(--space-6);
+  margin: 0;
+}
+
+.sidebar-history-error {
+  color: var(--color-error, #d32f2f);
+}
+
 /* ─── Desktop (Web) ──────────────────────────────── */
 @media (min-width: 768px) {
   .sidebar {
