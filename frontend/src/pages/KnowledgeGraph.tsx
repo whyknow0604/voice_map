@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ForceGraph2D } from "react-force-graph";
+import ForceGraph2D from "react-force-graph-2d";
 import api from "@/services/api";
 
 interface DocumentSummary {

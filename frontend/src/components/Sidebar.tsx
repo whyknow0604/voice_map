@@ -22,6 +22,7 @@ export default function Sidebar({ isOpen, onClose, activeConversationId }: Sideb
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [userName, setUserName] = useState("사용자");
 
   useEffect(() => {
     if (!isOpen) return;
@@ -33,6 +34,13 @@ export default function Sidebar({ isOpen, onClose, activeConversationId }: Sideb
       .catch(() => setError("대화 목록을 불러오지 못했습니다."))
       .finally(() => setLoading(false));
   }, [isOpen]);
+
+  useEffect(() => {
+    api
+      .get<{ name: string }>("/auth/me")
+      .then((res) => setUserName(res.data.name || "사용자"))
+      .catch(() => {/* 실패 시 기본값 유지 */});
+  }, []);
 
   const handleNewChat = () => {
     navigate("/chat");
@@ -156,10 +164,10 @@ export default function Sidebar({ isOpen, onClose, activeConversationId }: Sideb
         <div className="sidebar-footer">
           <div className="sidebar-user">
             <div className="sidebar-user-avatar">
-              U
+              {userName.charAt(0).toUpperCase()}
             </div>
             <div className="sidebar-user-info">
-              <p className="sidebar-user-name">사용자</p>
+              <p className="sidebar-user-name">{userName}</p>
               <p className="sidebar-user-plan">프리미엄 플랜</p>
             </div>
             <button
